@@ -1,0 +1,87 @@
+---
+title: Plugins
+description: Extend the request pipeline with guardrails and logging.
+---
+
+Plugins run at specific stages in the request lifecycle:
+
+- `before_request`
+- `after_request`
+- `on_error`
+
+Each plugin is identified by name and type and configured in `config.yaml`.
+
+## Built-in plugins
+
+### Word filter
+
+Blocks requests containing matching words or phrases.
+
+```yaml
+- name: word-filter
+  type: guardrail
+  stage: before_request
+  enabled: true
+  config:
+    blocked_words: ["password", "secret"]
+    case_sensitive: false
+```
+
+### Max token
+
+Enforces max tokens, max messages, and optional input length.
+
+```yaml
+- name: max-token
+  type: guardrail
+  stage: before_request
+  enabled: true
+  config:
+    max_tokens: 4096
+    max_messages: 100
+    max_input_length: 20000
+```
+
+### Response cache
+
+Caches exact match responses in memory.
+
+```yaml
+- name: response-cache
+  type: transform
+  stage: before_request
+  enabled: true
+  config:
+    max_age: 300
+    max_entries: 1000
+```
+
+### Request logger
+
+Emits structured logs and can persist to SQLite or Postgres.
+
+```yaml
+- name: request-logger
+  type: logging
+  stage: before_request
+  enabled: true
+  config:
+    level: info
+    persist: true
+    backend: sqlite
+    dsn: ferrogw-requests.db
+```
+
+### Rate limit
+
+Rejects requests using a token bucket.
+
+```yaml
+- name: rate-limit
+  type: ratelimit
+  stage: before_request
+  enabled: true
+  config:
+    requests_per_second: 50
+    burst: 100
+```

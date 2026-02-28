@@ -1,0 +1,24 @@
+---
+title: Server settings
+description: Runtime environment variables for the gateway.
+---
+
+## Core runtime
+
+- `PORT` - server port (default `8080`)
+- `CORS_ORIGINS` - comma-separated list of allowed origins
+- `GATEWAY_CONFIG` - path to JSON or YAML config file
+
+## Stores
+
+- `CONFIG_STORE_BACKEND` - `memory`, `sqlite`, `postgres`
+- `CONFIG_STORE_DSN` - SQLite file path or Postgres DSN
+- `API_KEY_STORE_BACKEND` - `memory`, `sqlite`, `postgres`
+- `API_KEY_STORE_DSN` - SQLite file path or Postgres DSN
+- `REQUEST_LOG_STORE_BACKEND` - `sqlite`, `postgres`
+- `REQUEST_LOG_STORE_DSN` - SQLite file path or Postgres DSN
+
+## Rate limiting
+
+- `RATE_LIMIT_RPS` - requests per second (enables per-IP limiting)
+- `RATE_LIMIT_BURST` - burst capacity

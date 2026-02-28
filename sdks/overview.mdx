@@ -1,0 +1,28 @@
+---
+title: SDK usage
+description: Use existing OpenAI SDKs by changing the base URL.
+---
+
+You can keep your existing OpenAI SDK and only change the base URL and API key.
+
+## JavaScript
+
+```js
+import OpenAI from "openai";
+
+const client = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+  baseURL: "http://localhost:8080"
+});
+```
+
+## Python
+
+```python
+from openai import OpenAI
+
+client = OpenAI(
+    api_key="sk-your-key",
+    base_url="http://localhost:8080"
+)
+```

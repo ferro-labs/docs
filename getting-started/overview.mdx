@@ -1,0 +1,19 @@
+---
+title: Overview
+description: What the AI Gateway does and how it fits into your stack.
+---
+
+The AI Gateway sits between your applications and upstream model providers. It exposes a single OpenAI compatible API and handles routing, authentication, observability, and resiliency in one place.
+
+## When to use it
+
+- You need multiple providers with a consistent interface.
+- You want failover and load balancing without rewriting app code.
+- You want centralized logs, metrics, and request tracing.
+
+## How it works
+
+1. Your app sends OpenAI format requests to the gateway.
+2. The gateway applies routing, auth, and policy checks.
+3. The gateway forwards traffic to the selected provider.
+4. Responses and metrics are recorded and returned to your app.

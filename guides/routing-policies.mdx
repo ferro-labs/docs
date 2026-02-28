@@ -1,0 +1,24 @@
+---
+title: Routing policies
+description: Choose how requests are routed across providers.
+---
+
+The gateway supports multiple routing strategies to balance cost, latency, and reliability.
+
+## Single
+
+Route all requests to one provider or model.
+
+## Fallback
+
+Retry a secondary provider if the primary fails, with exponential backoff.
+
+## Weighted
+
+Split traffic across providers by percentage.
+
+## Conditional
+
+Route based on request metadata or model selection.
+
+Use routing policies to control cost and reduce downtime during provider outages.

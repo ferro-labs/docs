@@ -1,0 +1,16 @@
+---
+title: Observability
+description: Logs, metrics, and health checks.
+---
+
+## Logs
+
+The gateway emits structured JSON logs with per request trace IDs for correlation.
+
+## Metrics
+
+Prometheus metrics are exposed at `/metrics`, including request counts and latency histograms.
+
+## Health
+
+`/health` provides a deep health check with per provider status.

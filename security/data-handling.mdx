@@ -1,0 +1,25 @@
+---
+title: Data handling
+description: Storage, secrets, and least privilege guidance.
+---
+
+## Storage backends
+
+The gateway supports memory, SQLite, and Postgres stores for config, API keys, and request logs.
+
+```bash
+export CONFIG_STORE_BACKEND=sqlite
+export CONFIG_STORE_DSN=./ferrogw-config.db
+
+export API_KEY_STORE_BACKEND=sqlite
+export API_KEY_STORE_DSN=./ferrogw-keys.db
+
+export REQUEST_LOG_STORE_BACKEND=sqlite
+export REQUEST_LOG_STORE_DSN=./ferrogw-requests.db
+```
+
+## Least privilege
+
+- Use dedicated credentials for each provider.
+- Restrict database permissions to only the required tables.
+- Prefer TLS for external database connections.

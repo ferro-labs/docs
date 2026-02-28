@@ -1,0 +1,39 @@
+---
+title: Quickstart
+description: Run the gateway and send your first request.
+---
+
+## Run with Docker
+
+```bash
+docker run --rm -p 8080:8080 \
+  -e OPENAI_API_KEY=sk-your-key \
+  ghcr.io/ferro-labs/ai-gateway:latest
+```
+
+## Build from source
+
+```bash
+git clone https://github.com/ferro-labs/ai-gateway.git
+cd ai-gateway
+
+export OPENAI_API_KEY=sk-your-key
+make run
+```
+
+## Send a request
+
+Replace `model` with a model you have access to.
+
+```bash
+curl http://localhost:8080/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gpt-4o-mini",
+    "messages": [
+      {"role": "user", "content": "Hello from Ferro AI Gateway"}
+    ]
+  }'
+```
+
+If you are using an OpenAI compatible SDK, set the base URL to `http://localhost:8080` and keep the rest of your code unchanged.

@@ -1,0 +1,32 @@
+---
+title: Rate limiting
+description: Control request volume at the edge and in the pipeline.
+---
+
+The gateway supports rate limiting in two layers.
+
+## HTTP middleware (per IP)
+
+Enable per IP limits with environment variables:
+
+```bash
+export RATE_LIMIT_RPS=20
+export RATE_LIMIT_BURST=40
+```
+
+Requests beyond the limit receive a `429` with an OpenAI style error response.
+
+## Plugin rate limiting (per request)
+
+Add the `rate-limit` plugin to reject traffic before it hits a provider:
+
+```yaml
+plugins:
+  - name: rate-limit
+    type: ratelimit
+    stage: before_request
+    enabled: true
+    config:
+      requests_per_second: 50
+      burst: 100
+```

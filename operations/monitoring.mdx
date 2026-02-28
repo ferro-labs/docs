@@ -1,0 +1,18 @@
+---
+title: Monitoring and operations
+description: Keep the gateway healthy in production.
+---
+
+## Metrics and health
+
+- Scrape `/metrics` with Prometheus.
+- Alert on `/health` provider failures.
+
+## Logging
+
+Ship JSON logs to your log pipeline and correlate using trace IDs.
+
+## Resiliency controls
+
+- Circuit breakers isolate failing providers.
+- Rate limiting and plugins enforce guardrails.

@@ -1,0 +1,31 @@
+---
+title: Request logging
+description: Persist request logs to SQLite or Postgres.
+---
+
+## Plugin-based logging
+
+Use the `request-logger` plugin to record request lifecycle events.
+
+```yaml
+- name: request-logger
+  type: logging
+  stage: before_request
+  enabled: true
+  config:
+    level: info
+    persist: true
+    backend: sqlite
+    dsn: ferrogw-requests.db
+```
+
+## Log store backends
+
+You can also enable the request log store for the admin API.
+
+```bash
+export REQUEST_LOG_STORE_BACKEND=sqlite
+export REQUEST_LOG_STORE_DSN=ferrogw-requests.db
+```
+
+Supported backends are `sqlite` and `postgres`. If disabled, `/admin/logs` returns empty data.

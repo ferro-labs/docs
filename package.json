@@ -1,0 +1,16 @@
+{
+  "name": "ferro-labs-docs",
+  "private": true,
+  "packageManager": "pnpm@10.5.2",
+  "scripts": {
+    "dev": "mintlify dev",
+    "build": "mintlify validate",
+    "test-links": "mintlify broken-links"
+  },
+  "devDependencies": {
+    "mintlify": "^4.2.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

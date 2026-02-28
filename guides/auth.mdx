@@ -1,0 +1,26 @@
+---
+title: Authentication
+description: Configure provider credentials and gateway access keys.
+---
+
+## Provider credentials
+
+Set provider specific credentials as environment variables. The gateway injects these when proxying requests to providers.
+
+Example for OpenAI:
+
+```bash
+export OPENAI_API_KEY=sk-your-key
+```
+
+## Gateway API keys
+
+The gateway can issue its own API keys with scoped access. For first time setup, you can use bootstrap keys for the admin API.
+
+```bash
+export ADMIN_BOOTSTRAP_KEY="change-me"
+export ADMIN_BOOTSTRAP_READ_ONLY_KEY="change-me"
+export ADMIN_BOOTSTRAP_ENABLED=true
+```
+
+Bootstrap keys are only honored while the API key store is empty.

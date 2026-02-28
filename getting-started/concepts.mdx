@@ -1,0 +1,23 @@
+---
+title: Concepts
+description: Core ideas you need to configure the gateway.
+---
+
+## OpenAI compatible API
+
+The gateway speaks the OpenAI API format. That lets you reuse existing SDKs while the gateway handles provider specific credentials and routing.
+
+## Routing strategies
+
+- Single: Always use one provider or model.
+- Fallback: Retry a secondary provider with backoff if the primary fails.
+- Weighted: Distribute traffic by weight across providers.
+- Conditional: Route based on model or request metadata.
+
+## Plugins
+
+Plugins let you add request level controls, such as guardrails, rate limits, caching, or request logging.
+
+## Observability
+
+The gateway exposes structured JSON logs, Prometheus metrics at `/metrics`, and a health endpoint at `/health`.
