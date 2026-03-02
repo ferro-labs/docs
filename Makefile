@@ -1,18 +1,23 @@
-SHELL := /bin/bash
+PNPM ?= pnpm
 
-.PHONY: dev build test-links
+.PHONY: install dev build serve typecheck clean check
 
-## Start local dev server
+install:
+	$(PNPM) install
 
 dev:
-	pnpm dev
-
-## Build docs
+	$(PNPM) start
 
 build:
-	pnpm build
+	$(PNPM) build
 
-## Check for broken links
+serve:
+	$(PNPM) serve
 
-test-links:
-	pnpm test-links
+typecheck:
+	$(PNPM) typecheck
+
+clean:
+	$(PNPM) clear
+
+check: typecheck build

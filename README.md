@@ -1,17 +1,41 @@
-# Ferro Labs Docs
+# Website
 
-Documentation site for Ferro Labs AI Gateway.
+This website is built using [Docusaurus](https://docusaurus.io/), a modern static website generator.
 
-## Local development
+## Installation
 
-1. Install Node.js (>= 20) and pnpm.
-2. Install dependencies: `pnpm install`.
-3. Start the dev server: `pnpm dev`.
+```bash
+yarn
+```
 
-The site will be available at `http://localhost:3333`.
+## Local Development
 
-## Structure
+```bash
+yarn start
+```
 
-- `docs.json`: Navigation and site configuration.
-- `start.mdx`: Landing page.
-- Section folders like `getting-started/`, `guides/`, and `api-reference/`.
+This command starts a local development server and opens up a browser window. Most changes are reflected live without having to restart the server.
+
+## Build
+
+```bash
+yarn build
+```
+
+This command generates static content into the `build` directory and can be served using any static contents hosting service.
+
+## Deployment
+
+Using SSH:
+
+```bash
+USE_SSH=true yarn deploy
+```
+
+Not using SSH:
+
+```bash
+GIT_USER=<Your GitHub username> yarn deploy
+```
+
+If you are using GitHub pages for hosting, this command is a convenient way to build the website and push to the `gh-pages` branch.

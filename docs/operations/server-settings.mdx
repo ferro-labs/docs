@@ -8,6 +8,16 @@ description: Runtime environment variables for the gateway.
 - `PORT` - server port (default `8080`)
 - `CORS_ORIGINS` - comma-separated list of allowed origins
 - `GATEWAY_CONFIG` - path to JSON or YAML config file
+- `LOG_LEVEL` - logging level (for example `debug`, `info`, `warn`, `error`)
+- `LOG_FORMAT` - log output format
+
+## Admin bootstrap
+
+- `ADMIN_BOOTSTRAP_KEY` - first-run admin bearer key
+- `ADMIN_BOOTSTRAP_READ_ONLY_KEY` - first-run read-only bearer key
+- `ADMIN_BOOTSTRAP_ENABLED` - enable or disable bootstrap keys (default enabled)
+
+Bootstrap keys are only honored while the API key store is empty.
 
 ## Stores
 

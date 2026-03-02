@@ -1,10 +1,23 @@
-node_modules/
+# Dependencies
+/node_modules
+
+# Production
+/build
+/build/
+
+# Generated files
+.docusaurus/
+/.docusaurus/
+.cache-loader
+
+# Misc
 .DS_Store
-.env
-.env.*
-.vscode/
-*.log
-.cache/
-.mintlify-cache/
-out/
-dist/
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*

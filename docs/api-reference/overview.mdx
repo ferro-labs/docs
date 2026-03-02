@@ -16,9 +16,10 @@ http://localhost:8080
 ## Common endpoints
 
 - `/v1/chat/completions`
+- `/v1/models`
 - `/v1/embeddings`
-- `/v1/images`
-- `/v1/audio`
-- `/v1/files`
+- `/v1/images/generations`
+- `/health`
+- `/metrics`
 
-Non chat endpoints are proxied to the selected provider while preserving payloads.
+Other `/v1/*` endpoints (for example `/v1/audio/*`, `/v1/files`, `/v1/realtime`) are proxied to the selected provider while preserving payloads.

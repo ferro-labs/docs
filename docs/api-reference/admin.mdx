@@ -40,6 +40,36 @@ Authorization: Bearer <api-key>
 - `DELETE /admin/config`
 - `POST /admin/config/rollback/{version}`
 
+## Query parameters
+
+`GET /admin/keys/usage`:
+
+- `limit` (default `20`, max `100`)
+- `offset` (default `0`)
+- `sort` (`usage` or `last_used`, default `usage`)
+- `active` (`true` or `false`)
+- `since` (RFC3339)
+
+`GET /admin/logs`:
+
+- `limit` (default `50`, max `200`)
+- `offset` (default `0`)
+- `stage`, `model`, `provider`
+- `since` (RFC3339)
+
+`GET /admin/logs/stats`:
+
+- `limit` (top-N buckets, max `100`)
+- `stage`, `model`, `provider`
+- `since` (RFC3339)
+
+`DELETE /admin/logs`:
+
+- required: `before` (RFC3339)
+- optional: `stage`, `model`, `provider`
+
+When request log storage is disabled, log endpoints return `501 not implemented`.
+
 ## Bootstrap keys
 
 Use bootstrap keys to access admin endpoints on first run. They are only honored when the API key store is empty.
