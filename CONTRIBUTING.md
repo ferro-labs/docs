@@ -91,7 +91,7 @@ Supported: `bash`, `yaml`, `json`, `go`, `python`, `typescript`, `promql`
 
 ### Links
 
-- Internal: use relative paths — `[Quickstart](../getting-started/quickstart.mdx)`
+- Internal: use absolute route paths (no `.mdx` extension) — `[Quickstart](/getting-started/quickstart)`
 - External: use full URLs
 
 ---
