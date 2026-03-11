@@ -39,6 +39,20 @@
   color: #fff !important;
 }
 
+.comingSoonBadge {
+  display: inline-flex;
+  align-items: center;
+  background: #f0f9ff;
+  color: #0369a1;
+  border: 1px solid #bae6fd;
+  padding: 0.5rem 1.25rem;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  letter-spacing: 0.03em;
+}
+
 .featureGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));

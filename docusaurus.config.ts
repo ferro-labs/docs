@@ -194,7 +194,6 @@ const config: Config = {
         {
           title: 'Ferro Labs',
           items: [
-            { label: '🏠  Website', href: 'https://www.ferrolabs.ai' },
             { label: '⚡  Enterprise', to: '/enterprise' },
             { label: '📊  Status', href: 'https://status.ferrolabs.ai' },
           ],
