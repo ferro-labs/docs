@@ -1,6 +1,7 @@
 # Ferro Labs AI Gateway — Documentation
 
 [![CI](https://github.com/ferro-labs/docs/actions/workflows/ci.yml/badge.svg)](https://github.com/ferro-labs/docs/actions/workflows/ci.yml)
+[![Deploy](https://github.com/ferro-labs/docs/actions/workflows/deploy.yml/badge.svg)](https://github.com/ferro-labs/docs/actions/workflows/deploy.yml)
 
 Official documentation site for **[Ferro Labs AI Gateway](https://github.com/ferro-labs/ai-gateway)** — the open-source, OpenAI-compatible LLM proxy supporting 19 providers, 2,500+ models, 11 safety plugins, and MCP tool-calling.
 
