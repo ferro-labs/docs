@@ -89,6 +89,29 @@ docs/
 - **Links** — internal links use relative paths (`./quickstart.mdx`), external use full URLs
 - **Images** — place in `static/` and reference with absolute paths (`/img/...`)
 
+## CI / GitHub Actions
+
+The CI workflow (`.github/workflows/ci.yml`) runs on every push and PR to `main` and `development`:
+
+1. `pnpm install --frozen-lockfile`
+2. `pnpm typecheck` — TypeScript check
+3. `pnpm build` — full Docusaurus production build (validates all links)
+
+A PR must pass CI before it can be merged.
+
+---
+
+## Branch strategy
+
+| Branch | Purpose |
+|---|---|
+| `main` | Production — auto-deploys to docs.ferrolabs.ai |
+| `development` | Staging — all PRs target this branch |
+
+Contributors must open PRs against `development`, not `main`.
+
+---
+
 ## External Links
 
 | Name | URL |
@@ -96,3 +119,5 @@ docs/
 | OSS Gateway repo | https://github.com/ferro-labs/ai-gateway |
 | Website | https://www.ferrolabs.ai |
 | Twitter/X | https://x.com/ferroLabsAI |
+| Contributing guide | CONTRIBUTING.md |
+| Code of Conduct | CODE_OF_CONDUCT.md |

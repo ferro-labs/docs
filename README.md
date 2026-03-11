@@ -1,28 +1,43 @@
-# Website
+# Ferro Labs AI Gateway — Documentation
 
-This website is built using [Docusaurus](https://docusaurus.io/), a modern static website generator.
+[![CI](https://github.com/ferro-labs/docs/actions/workflows/ci.yml/badge.svg)](https://github.com/ferro-labs/docs/actions/workflows/ci.yml)
 
-## Installation
+Official documentation site for **[Ferro Labs AI Gateway](https://github.com/ferro-labs/ai-gateway)** — the open-source, OpenAI-compatible LLM proxy.
+
+Live at **[docs.ferrolabs.ai](https://docs.ferrolabs.ai)**
+
+Built with [Docusaurus 3](https://docusaurus.io/), React 19, and TypeScript.
+
+---
+
+## Contributing
+
+We welcome contributions! See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines on:
+- Fixing typos and broken links
+- Improving existing pages
+- Adding new guides or examples
+
+PRs go to the `development` branch.
+
+---
+
+## Local development
+
+**Requirements**: Node.js 20+, pnpm 9+
 
 ```bash
-yarn
+# Install dependencies
+pnpm install
+
+# Start dev server at http://localhost:3000
+pnpm start
+
+# Production build (validates all links)
+pnpm build
+
+# TypeScript typecheck
+pnpm typecheck
 ```
-
-## Local Development
-
-```bash
-yarn start
-```
-
-This command starts a local development server and opens up a browser window. Most changes are reflected live without having to restart the server.
-
-## Build
-
-```bash
-yarn build
-```
-
-This command generates static content into the `build` directory and can be served using any static contents hosting service.
 
 ## Deployment
 
