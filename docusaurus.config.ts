@@ -199,9 +199,8 @@ const config: Config = {
       appId: process.env.ALGOLIA_APP_ID ?? 'YOUR_APP_ID',
       apiKey: process.env.ALGOLIA_SEARCH_KEY ?? 'YOUR_SEARCH_API_KEY', // public, read-only Search API key
       indexName: process.env.ALGOLIA_INDEX_NAME ?? 'ferrolabs',
-      // Optional – narrows results to the current docs version
-      contextualSearch: true,
-      // Optional – override the Algolia search page URL
+      // false = no docusaurus_tag facet filter; correct for single-version docs
+      contextualSearch: false,
       searchPagePath: 'search',
     },
     prism: {
