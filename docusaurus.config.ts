@@ -41,16 +41,6 @@ const config: Config = {
 
   themes: [
     '@docusaurus/theme-mermaid',
-    [
-      '@easyops-cn/docusaurus-search-local',
-      {
-        hashed: true,
-        indexDocs: true,
-        indexPages: true,
-        docsRouteBasePath: '/',
-        searchBarShortcutHint: false,
-      },
-    ],
   ],
 
   plugins: [
@@ -200,6 +190,15 @@ const config: Config = {
         },
       ],
       copyright: `Copyright © ${new Date().getFullYear()} Ferro Labs. Apache 2.0 Open Source.`,
+    },
+    algolia: {
+      appId: process.env.ALGOLIA_APP_ID ?? 'YOUR_APP_ID',
+      apiKey: process.env.ALGOLIA_SEARCH_KEY ?? 'YOUR_SEARCH_API_KEY', // public, read-only Search API key
+      indexName: process.env.ALGOLIA_INDEX_NAME ?? 'ferrolabs',
+      // Optional – narrows results to the current docs version
+      contextualSearch: true,
+      // Optional – override the Algolia search page URL
+      searchPagePath: 'search',
     },
     prism: {
       theme: prismThemes.github,
