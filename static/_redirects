@@ -1,0 +1,2 @@
+# Redirect Cloudflare Pages subdomain to canonical domain
+https://ferrodocs.pages.dev/* https://docs.ferrolabs.ai/:splat 301

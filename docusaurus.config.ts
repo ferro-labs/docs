@@ -27,6 +27,10 @@ const config: Config = {
 
   onBrokenLinks: 'throw',
 
+  // Explicit trailing slash prevents Cloudflare 301 redirect loops and
+  // ensures canonical tags match the crawled URLs exactly.
+  trailingSlash: true,
+
   // Even if you don't use internationalization, you can use this field to set
   // useful metadata like html lang. For example, if your site is Chinese, you
   // may want to replace "en" with "zh-Hans".

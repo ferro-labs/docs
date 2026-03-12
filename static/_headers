@@ -1,0 +1,9 @@
+# Prevent Cloudflare Pages from redirecting canonical URLs
+# and ensure the Algolia crawler sees consistent URLs.
+
+https://docs.ferrolabs.ai/*
+  X-Robots-Tag: index, follow
+
+# Block the .pages.dev subdomain from being indexed (canonical is the custom domain)
+https://ferrodocs.pages.dev/*
+  X-Robots-Tag: noindex
