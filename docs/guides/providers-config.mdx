@@ -1,7 +1,7 @@
 ---
 title: Provider configuration
-description: Environment variables and credentials for all 19 AI providers in the Ferro Labs AI Gateway — API keys, base URLs, and model lists for OpenAI, Anthropic, Gemini, Ollama, and more.
-keywords: [AI provider configuration, OpenAI API key setup, Anthropic setup, LLM provider credentials, gateway environment variables, provider API keys]
+description: Environment variables and credentials for all 29 AI providers in the Ferro Labs AI Gateway — API keys, base URLs, and model lists for OpenAI, Anthropic, Gemini, Ollama, Cerebras, NVIDIA NIM, Cloudflare, Databricks, and more.
+keywords: [AI provider configuration, OpenAI API key setup, Anthropic setup, LLM provider credentials, gateway environment variables, provider API keys, Cerebras, NVIDIA NIM, Cloudflare Workers AI, Databricks, OpenRouter]
 ---
 
 Providers are automatically registered when their required environment variables are present at startup. Set at least one provider key before starting the gateway.
@@ -24,6 +24,14 @@ export FIREWORKS_API_KEY=fw-...
 export AI21_API_KEY=...
 export XAI_API_KEY=xai-...
 export HUGGING_FACE_API_KEY=hf-...
+export CEREBRAS_API_KEY=...
+export NVIDIA_NIM_API_KEY=...
+export NOVITA_API_KEY=...
+export QWEN_API_KEY=...
+export MOONSHOT_API_KEY=...
+export SAMBANOVA_API_KEY=...
+export DEEPINFRA_API_KEY=...
+export OPENROUTER_API_KEY=...
 ```
 
 ## Azure OpenAI
@@ -86,6 +94,72 @@ Vertex AI uses Application Default Credentials (ADC). Set the project ID and ens
 ```bash
 export VERTEX_AI_PROJECT_ID=my-gcp-project
 # ADC must be configured via gcloud or GOOGLE_APPLICATION_CREDENTIALS
+```
+
+## Cloudflare Workers AI
+
+Requires both your Cloudflare account ID and an API token with Workers AI permissions:
+
+```bash
+export CLOUDFLARE_ACCOUNT_ID=...
+export CLOUDFLARE_API_TOKEN=...
+```
+
+## Databricks
+
+Use the workspace URL (without trailing slash) and a personal access token or service principal token:
+
+```bash
+export DATABRICKS_HOST=https://your-workspace.azuredatabricks.net
+export DATABRICKS_TOKEN=dapi...
+```
+
+## Cerebras
+
+```bash
+export CEREBRAS_API_KEY=...
+```
+
+## NVIDIA NIM
+
+```bash
+export NVIDIA_NIM_API_KEY=...
+```
+
+## Novita AI
+
+```bash
+export NOVITA_API_KEY=...
+```
+
+## Qwen (Alibaba Cloud)
+
+```bash
+export QWEN_API_KEY=...
+```
+
+## Moonshot AI
+
+```bash
+export MOONSHOT_API_KEY=...
+```
+
+## SambaNova
+
+```bash
+export SAMBANOVA_API_KEY=...
+```
+
+## DeepInfra
+
+```bash
+export DEEPINFRA_API_KEY=...
+```
+
+## OpenRouter
+
+```bash
+export OPENROUTER_API_KEY=...
 ```
 
 ## Validate configured providers

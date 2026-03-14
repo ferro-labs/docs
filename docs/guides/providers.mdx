@@ -1,10 +1,10 @@
 ---
 title: Providers
-description: All 19 AI providers supported by the Ferro Labs AI Gateway — OpenAI, Anthropic, Gemini, Mistral, Groq, DeepSeek, Ollama, AWS Bedrock, Azure OpenAI, and more with virtual key routing.
-keywords: [AI providers, OpenAI proxy, Anthropic gateway, Gemini proxy, Mistral gateway, Groq proxy, multi-LLM gateway, Ollama proxy, Bedrock gateway, DeepSeek proxy]
+description: All 29 AI providers supported by the Ferro Labs AI Gateway — OpenAI, Anthropic, Gemini, Mistral, Groq, DeepSeek, Ollama, AWS Bedrock, Azure OpenAI, Cerebras, NVIDIA NIM, Cloudflare, Databricks, and more with virtual key routing.
+keywords: [AI providers, OpenAI proxy, Anthropic gateway, Gemini proxy, Mistral gateway, Groq proxy, multi-LLM gateway, Ollama proxy, Bedrock gateway, DeepSeek proxy, Cerebras, NVIDIA NIM, Cloudflare Workers AI, Databricks, OpenRouter]
 ---
 
-The gateway supports 19 AI providers. A provider becomes active when its required environment variables are set — no code changes or rebuilds needed.
+The gateway supports 29 AI providers. A provider becomes active when its required environment variables are set — no code changes or rebuilds needed.
 
 ## All providers
 
@@ -29,15 +29,27 @@ The gateway supports 19 AI providers. A provider becomes active when its require
 | **Replicate** | `replicate` | `REPLICATE_API_TOKEN` |
 | **Vertex AI** | `vertex-ai` | `VERTEX_AI_PROJECT_ID` |
 | **Hugging Face** | `hugging-face` | `HUGGING_FACE_API_KEY` |
+| **Cerebras** | `cerebras` | `CEREBRAS_API_KEY` |
+| **NVIDIA NIM** | `nvidia-nim` | `NVIDIA_NIM_API_KEY` |
+| **Cloudflare Workers AI** | `cloudflare` | `CLOUDFLARE_ACCOUNT_ID` + `CLOUDFLARE_API_TOKEN` |
+| **Databricks** | `databricks` | `DATABRICKS_HOST` + `DATABRICKS_TOKEN` |
+| **Novita AI** | `novita` | `NOVITA_API_KEY` |
+| **Qwen (Alibaba)** | `qwen` | `QWEN_API_KEY` |
+| **Moonshot AI** | `moonshot` | `MOONSHOT_API_KEY` |
+| **SambaNova** | `sambanova` | `SAMBANOVA_API_KEY` |
+| **DeepInfra** | `deepinfra` | `DEEPINFRA_API_KEY` |
+| **OpenRouter** | `openrouter` | `OPENROUTER_API_KEY` |
 
 ## Provider capabilities
 
 All providers support chat completions and streaming. Capability support varies by provider:
 
-- **Embeddings** — OpenAI, Cohere, Mistral, Azure OpenAI, Hugging Face
+- **Embeddings** — OpenAI, Cohere, Mistral, Azure OpenAI, Hugging Face, Cloudflare Workers AI
 - **Image generation** — OpenAI (DALL·E), Replicate, Fireworks
 - **Local / self-hosted** — Ollama
-- **Managed cloud inference** — AWS Bedrock, Vertex AI, Azure Foundry
+- **Managed cloud inference** — AWS Bedrock, Vertex AI, Azure Foundry, Databricks
+- **High-speed inference** — Cerebras, SambaNova, Groq
+- **Model aggregators** — OpenRouter, Novita AI (access hundreds of models via one key)
 
 ## Provider selection at runtime
 
