@@ -1,7 +1,7 @@
 ---
 title: Routing policies
-description: All 8 LLM routing strategies in the Ferro Labs AI Gateway — single, fallback, weighted, conditional, least-latency, cost-optimized, content-based, and A/B testing for multi-provider AI traffic.
-keywords: [LLM routing strategies, AI fallback routing, weighted LLM routing, cost-optimized AI routing, AI load balancing, least-latency routing, content-based routing, AB testing LLM]
+description: All 8 LLM routing strategies in the Ferro Labs AI Gateway — single, fallback, weighted, conditional, least-latency, cost-optimized, content-based, and A/B test routing for multi-provider AI traffic.
+keywords: [LLM routing strategies, AI fallback routing, weighted LLM routing, cost-optimized AI routing, AI load balancing, least-latency routing, content-based routing, ab-test routing]
 ---
 
 The gateway implements eight routing strategies. Set `strategy.mode` in `config.yaml` to choose one.
@@ -118,55 +118,55 @@ targets:
 
 Cost estimation uses the model name in the request and the catalog's `input_cost_per_token` field. The target with the lowest estimated cost for the matched model wins.
 
-## Content-based routing
+## Content-based
 
-Evaluates the text content of user role prompt messages against a set of rules and routes to the matching target. Rules are evaluated in declaration order — the first match wins. Unmatched requests fall back to the first configured target.
+Routes based on the content of the user's messages. Rules are evaluated in order; the first match wins. If no rule matches, the request falls through to the first target.
 
-Three condition types are available:
+Three condition types are supported:
 
-| Type | Behaviour |
+| Type | Behavior |
 |---|---|
-| `prompt_contains` | Case-insensitive substring match |
-| `prompt_not_contains` | Inverted case-insensitive substring match |
-| `prompt_regex` | Go regular expression match |
+| `prompt_contains` | Case-insensitive substring match on any user message |
+| `prompt_not_contains` | Matches when NO user message contains the value |
+| `prompt_regex` | Go regular-expression match on any user message |
 
-Regex patterns are compiled at gateway startup. An invalid regex is a startup error (no silent misrouting).
+Regex patterns are compiled at gateway startup. An invalid regex causes a startup error — there is no silent misrouting.
 
 ```yaml
 strategy:
   mode: content-based
   content_conditions:
     - type: prompt_contains
-      value: "write code"
-      target_key: deepseek
+      value: "translate"
+      target_key: deepl-provider
+    - type: prompt_regex
+      value: "(?i)(code|function|class|def |import )"
+      target_key: openai
     - type: prompt_contains
       value: "summarize"
-      target_key: gemini
-    - type: prompt_regex
-      value: "(?i)(sql|database|query)"
-      target_key: openai
+      target_key: anthropic
 
 targets:
+  - virtual_key: deepl-provider
   - virtual_key: openai
-  - virtual_key: deepseek
-  - virtual_key: gemini
+  - virtual_key: anthropic
 ```
 
-The first target (`openai`) is also the fallback for requests that match no rule.
+**When to use:** Route coding questions to a code-specialised model, translation requests to a dedicated translation provider, and general chat to a cost-efficient default — all without client-side logic.
 
-## A/B testing
+## A/B test
 
-Splits traffic across two or more named variants using weighted random sampling. Every routed request is tagged with the variant's `label` as the structured log field `ab_variant`, enabling per-variant quality and cost analysis in Grafana, Datadog, or any other log pipeline.
+Splits traffic across variants by configured weights. Every routed request is tagged with the `label` field for downstream observability (e.g., in `request-logger` output or analytics pipelines).
 
 ```yaml
 strategy:
   mode: ab-test
   ab_variants:
     - target_key: openai
-      weight: 80
+      weight: 70
       label: control
     - target_key: anthropic
-      weight: 20
+      weight: 30
       label: challenger
 
 targets:
@@ -174,9 +174,9 @@ targets:
   - virtual_key: anthropic
 ```
 
-Weights are relative (they are summed and each variant receives `weight/total` of traffic). Zero-weight variants participate with weight 1 (equal distribution). Negative weights are rejected at startup.
+Weights are relative — `70` and `30` send 70 % of traffic to `openai` and 30 % to `anthropic`. If a weight is `0`, the variant is treated as weight `1` (equal distribution with remaining variants). Negative weights are rejected at gateway startup.
 
-All traffic goes to a live provider — this is not a shadow/dark-launch mode.
+**When to use:** Compare quality or cost between two providers on live traffic. The `label` field is emitted in every `gateway.request.completed` event so you can aggregate results per variant.
 
 ## Combining strategies with circuit breakers
 

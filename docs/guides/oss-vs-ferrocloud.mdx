@@ -1,0 +1,69 @@
+---
+title: OSS vs FerroCloud
+description: Side-by-side comparison of the Ferro Labs AI Gateway open-source edition and FerroCloud managed service — features, limits, security plugins, and deployment options.
+keywords: [Ferro Gateway OSS vs Cloud, FerroCloud comparison, AI gateway self-hosted vs managed, open-source LLM proxy comparison]
+---
+
+The open-source gateway is the engine that powers both editions. FerroCloud wraps it with multi-tenancy, a management dashboard, durable billing, and enterprise-grade security plugins.
+
+## Feature comparison
+
+| Feature | OSS Gateway | FerroCloud |
+|---|---|---|
+| **Providers** | 29 providers, 2,500+ models | Same |
+| **Routing strategies** | 8 (single, fallback, loadbalance, conditional, least-latency, cost-optimized, content-based, ab-test) | Same |
+| **Streaming** | ✅ SSE + full MCP agentic loop | Same |
+| **MCP tool servers** | ✅ | Same |
+| **Plugins** | 6 OSS plugins | 6 OSS + 5 enterprise plugins |
+| | `word-filter`, `max-token`, `response-cache`, `request-logger`, `rate-limit`, `budget` | + `pii-redact`, `secret-scan`, `prompt-shield`, `schema-guard`, `regex-guard` |
+| **Prompt templates** | ✅ Config-file defined | ✅ Config-file + Dashboard UI |
+| **Admin REST API** | ✅ Full read/write | ✅ Same + Team scoping |
+| **Multi-tenancy** | ❌ Single-tenant | ✅ Isolated per-tenant gateway instances |
+| **Dashboard** | ❌ | ✅ Usage, cost, logs, key management |
+| **Virtual key management** | Config file | Dashboard + API |
+| **Spend tracking** | In-memory (resets on restart) | Durable (PostgreSQL), per-key/team |
+| **Billing integration** | ❌ | ✅ Stripe |
+| **SSO / OAuth** | ❌ | ✅ Google, GitHub, SAML |
+| **Audit logs** | `request-logger` plugin (SQLite/Postgres) | Cloud-hosted, queryable |
+| **Prometheus metrics** | ✅ `/metrics` endpoint | ✅ Pre-built Grafana dashboards |
+| **Alerting** | Bring your own | Built-in (cost thresholds, error rate) |
+| **SLA** | None (community support) | 99.9% uptime SLA |
+| **Support** | GitHub Issues | Priority email + Slack |
+| **License** | Apache 2.0 | Proprietary |
+| **Deployment** | Self-hosted | Managed cloud (hosted by Ferro Labs) |
+
+## Security plugins (detail)
+
+The five enterprise security plugins require FerroCloud because they depend on ML inference services that run server-side:
+
+| Plugin | What it does | Requires |
+|---|---|---|
+| `pii-redact` | Detects and redacts PII (names, emails, phone numbers, SSNs…) using NER models | FerroCloud |
+| `secret-scan` | Detects leaked API keys, tokens, and credentials using pattern + entropy analysis | FerroCloud |
+| `prompt-shield` | Scores user messages for prompt injection attempts using a fine-tuned classifier | FerroCloud |
+| `schema-guard` | Validates model JSON output against a JSON Schema before returning to client | FerroCloud |
+| `regex-guard` | Blocks / warns on arbitrary regex rules (custom compliance patterns) | FerroCloud |
+
+The OSS `word-filter` plugin provides simple keyword blocking without a cloud dependency.
+
+## When to use the OSS gateway
+
+- You need full control over infrastructure and data residency
+- You are building a side project, prototype, or internal tool
+- You want to self-host without per-seat licensing
+- You are contributing to the open-source project
+
+## When to use FerroCloud
+
+- You need multi-tenant isolation (SaaS product built on top of Ferro)
+- You need PII redaction, prompt injection protection, or secret scanning
+- You want a managed dashboard with spend controls and team management
+- You prefer SLA-backed infrastructure without DevOps overhead
+
+## Data handling
+
+Both editions process requests exclusively at runtime — model inputs and outputs are not stored by default. Enabling the `request-logger` plugin (OSS) or enabling logging in FerroCloud explicitly opts you into persistence. See [data handling](/security/data-handling) for details.
+
+## Licensing
+
+The open-source gateway is licensed under [Apache 2.0](https://github.com/ferro-labs/ai-gateway/blob/main/LICENSE). You can use it commercially, modify it, and distribute it. FerroCloud is a proprietary managed service.

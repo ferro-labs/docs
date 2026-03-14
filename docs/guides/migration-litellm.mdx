@@ -1,0 +1,172 @@
+---
+title: Migrate from LiteLLM
+description: Step-by-step guide to replace LiteLLM with the Ferro Labs AI Gateway — swap the base URL and API key, convert provider configs, and retain existing retry and fallback logic.
+keywords: [LiteLLM migration, LiteLLM alternative, LiteLLM vs Ferro Gateway, migrate from LiteLLM, LLM proxy migration]
+---
+
+The Ferro Labs AI Gateway is a drop-in replacement for LiteLLM Proxy. Because both products implement the OpenAI Chat Completions API, migration is usually a base-URL swap and a config file rewrite.
+
+## What changes
+
+| Concept | LiteLLM | Ferro Gateway |
+|---|---|---|
+| Proxy config | `config.yaml` with `model_list` | `config.yaml` with `providers` + `targets` |
+| Provider credentials | `LITELLM_*` env vars | `virtual_keys` block or `FERRO_*` env vars |
+| Routing | `router_settings` | `strategy.mode` |
+| Fallback | `fallbacks` list | `strategy: {mode: fallback}` |
+| Load balancing | `routing_strategy: simple-shuffle` | `strategy: {mode: loadbalance}` |
+| Rate limiting | `router_settings.rpm_limit` | `rate-limit` plugin |
+| Caching | Redis/S3 integrations | `response-cache` plugin |
+| Request logging | LiteLLM callbacks | `request-logger` plugin |
+| Spend tracking | SQLite/Postgres via LiteLLM UI | `budget` plugin |
+
+## Step 1 — Start the gateway
+
+```bash
+docker run -d -p 8080:8080 \
+  -v $(pwd)/config.yaml:/config.yaml \
+  ghcr.io/ferro-labs/ai-gateway:latest
+```
+
+## Step 2 — Rewrite your config
+
+### LiteLLM config (before)
+
+```yaml
+model_list:
+  - model_name: gpt-4o
+    litellm_params:
+      model: openai/gpt-4o
+      api_key: "os.environ/OPENAI_API_KEY"
+
+  - model_name: claude-3-5-sonnet
+    litellm_params:
+      model: anthropic/claude-3-5-sonnet-20241022
+      api_key: "os.environ/ANTHROPIC_API_KEY"
+
+router_settings:
+  routing_strategy: least-busy
+  fallbacks:
+    - gpt-4o: [claude-3-5-sonnet]
+```
+
+### Ferro Gateway config (after)
+
+```yaml
+providers:
+  - key: openai
+    provider: openai
+    api_key: "${OPENAI_API_KEY}"
+
+  - key: anthropic
+    provider: anthropic
+    api_key: "${ANTHROPIC_API_KEY}"
+
+strategy:
+  mode: fallback
+
+targets:
+  - virtual_key: openai
+    retry:
+      attempts: 3
+      retry_on_status: [429, 502, 503, 504]
+  - virtual_key: anthropic
+```
+
+## Step 3 — Update the base URL in your code
+
+```python
+# Before (LiteLLM Proxy)
+from openai import OpenAI
+client = OpenAI(
+    api_key="sk-anything",
+    base_url="http://0.0.0.0:4000",
+)
+
+# After (Ferro Gateway)
+from openai import OpenAI
+client = OpenAI(
+    api_key="sk-your-openai-key",
+    base_url="http://localhost:8080",
+)
+```
+
+Model names stay the same — `gpt-4o`, `claude-3-5-sonnet-20241022`, etc. No other code changes needed.
+
+## Step 4 — Migrate plugins
+
+### Rate limiting
+
+```yaml
+# Before: LiteLLM router_settings.rpm_limit
+router_settings:
+  rpm_limit: 100
+
+# After: Ferro rate-limit plugin
+plugins:
+  - name: rate-limit
+    type: ratelimit
+    stage: before_request
+    enabled: true
+    config:
+      requests_per_second: 1.67   # 100 rpm ÷ 60
+      burst: 20
+```
+
+### Response caching
+
+```yaml
+# Before: LiteLLM Redis cache
+litellm_settings:
+  cache: true
+  cache_params:
+    type: redis
+    host: redis
+
+# After: Ferro in-memory cache (no Redis dependency)
+plugins:
+  - name: response-cache
+    type: transform
+    stage: before_request
+    enabled: true
+    config:
+      max_age: 300
+      max_entries: 1000
+```
+
+### Request logging
+
+```yaml
+# Before: LiteLLM callback
+litellm_settings:
+  success_callback: ["langfuse"]
+
+# After: Ferro request-logger plugin
+plugins:
+  - name: request-logger
+    type: logging
+    stage: before_request
+    enabled: true
+    config:
+      level: info
+      persist: true
+      backend: sqlite
+      dsn: ferrogw-requests.db
+```
+
+## Routing strategy equivalents
+
+| LiteLLM `routing_strategy` | Ferro `strategy.mode` |
+|---|---|
+| `simple-shuffle` | `loadbalance` |
+| `least-busy` | `loadbalance` |
+| `latency-based-routing` | `least-latency` |
+| `cost-based-routing` | `cost-optimized` |
+| Fallbacks list | `fallback` |
+
+## Feature parity notes
+
+- **LiteLLM UI** (spend dashboard, model management): Available in [FerroCloud](https://ferrolabs.ai). The OSS gateway exposes an admin REST API for programmatic access.
+- **Virtual keys / teams**: In FerroCloud. The OSS gateway supports API key passthrough via the `virtual_keys` config block.
+- **Spend tracking**: The `budget` plugin provides in-memory per-key limits. Durable billing is in FerroCloud.
+- **PII redaction, prompt injection detection**: FerroCloud only. See [OSS vs FerroCloud](/guides/oss-vs-ferrocloud).

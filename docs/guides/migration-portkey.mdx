@@ -1,0 +1,183 @@
+---
+title: Migrate from Portkey
+description: Step-by-step guide to replace Portkey with the Ferro Labs AI Gateway — configure providers and virtual keys, convert gateway configs, and set up routing strategies.
+keywords: [Portkey migration, Portkey alternative, Portkey vs Ferro Gateway, migrate from Portkey, LLM router migration]
+---
+
+The Ferro Labs AI Gateway is a self-hosted alternative to Portkey. Both expose an OpenAI-compatible endpoint, so migration requires a base-URL change and a config-file rewrite.
+
+## What changes
+
+| Concept | Portkey | Ferro Gateway |
+|---|---|---|
+| Provider credentials | Portkey dashboard virtual keys | `providers` block in `config.yaml` |
+| Gateway request header | `x-portkey-api-key` + `x-portkey-config` | Standard `Authorization: Bearer` header |
+| Configs (routing rules) | Portkey Config objects (JSON/dashboard) | `config.yaml` strategy block |
+| Fallback | `strategy: {mode: fallback}` in Portkey Config | `strategy: {mode: fallback}` |
+| Load balancing | `strategy: {mode: loadbalance}` + `weight` | `strategy: {mode: loadbalance}` + `weight` |
+| Retries | `retry: {attempts: N}` per target | `retry: {attempts: N}` per target |
+| Caching | Portkey semantic cache (cloud) | `response-cache` plugin (exact-match) |
+| Observability | Portkey logs dashboard | `request-logger` plugin + admin API |
+| Guardrails | Portkey Guardrails (cloud) | `word-filter`, `max-token`, `rate-limit` plugins (OSS) |
+| Prompt templates | Portkey Prompt Library | `prompt_templates` in `config.yaml` |
+
+## Step 1 — Start the gateway
+
+```bash
+docker run -d -p 8080:8080 \
+  -v $(pwd)/config.yaml:/config.yaml \
+  ghcr.io/ferro-labs/ai-gateway:latest
+```
+
+## Step 2 — Rewrite your config
+
+### Portkey config (before)
+
+Portkey uses JSON config objects passed via header or dashboard:
+
+```json
+{
+  "strategy": { "mode": "fallback" },
+  "targets": [
+    { "virtual_key": "openai-key-abc", "weight": 1 },
+    { "virtual_key": "anthropic-key-xyz", "weight": 1 }
+  ],
+  "retry": { "attempts": 3, "on_status_codes": [429, 502, 503] }
+}
+```
+
+### Ferro Gateway config (after)
+
+```yaml
+providers:
+  - key: openai
+    provider: openai
+    api_key: "${OPENAI_API_KEY}"
+
+  - key: anthropic
+    provider: anthropic
+    api_key: "${ANTHROPIC_API_KEY}"
+
+strategy:
+  mode: fallback
+
+targets:
+  - virtual_key: openai
+    retry:
+      attempts: 3
+      retry_on_status: [429, 502, 503, 504]
+  - virtual_key: anthropic
+    retry:
+      attempts: 2
+```
+
+## Step 3 — Update the base URL and headers
+
+```python
+# Before (Portkey)
+from openai import OpenAI
+from portkey_ai import PORTKEY_GATEWAY_URL, createHeaders
+
+client = OpenAI(
+    api_key="dummy",
+    base_url=PORTKEY_GATEWAY_URL,
+    default_headers=createHeaders(
+        api_key="pcpk-your-key",
+        virtual_key="openai-key-abc",
+    ),
+)
+
+# After (Ferro Gateway)
+from openai import OpenAI
+
+client = OpenAI(
+    api_key="sk-your-openai-key",
+    base_url="http://localhost:8080",
+)
+# No extra headers needed — credentials live in config.yaml
+```
+
+Model names are identical — no changes to your messages or parameters needed.
+
+## Step 4 — Migrate specific features
+
+### Weighted load balancing
+
+```yaml
+# Portkey config:
+# { "strategy": { "mode": "loadbalance" },
+#   "targets": [{"virtual_key": "oai", "weight": 7},
+#               {"virtual_key": "anth", "weight": 3}] }
+
+# Ferro config.yaml:
+strategy:
+  mode: loadbalance
+
+targets:
+  - virtual_key: openai
+    weight: 7
+  - virtual_key: anthropic
+    weight: 3
+```
+
+### Conditional routing by model
+
+```yaml
+# Route by model prefix (Portkey calls this "router" in their docs)
+strategy:
+  mode: conditional
+  conditions:
+    - key: model_prefix
+      value: gpt
+      target_key: openai
+    - key: model_prefix
+      value: claude
+      target_key: anthropic
+
+targets:
+  - virtual_key: openai
+  - virtual_key: anthropic
+```
+
+### Prompt templates
+
+Portkey Prompt Library → Ferro `prompt_templates`:
+
+```yaml
+prompt_templates:
+  - id: support-agent
+    template: |
+      You are a helpful support agent for {{company}}.
+      Respond in {{language}}. Be concise.
+```
+
+```python
+response = client.chat.completions.create(
+    model="gpt-4o-mini",
+    messages=[{"role": "user", "content": "How do I reset my password?"}],
+    extra_body={
+        "template_id": "support-agent",
+        "template_vars": {"company": "Acme Corp", "language": "English"},
+    },
+)
+```
+
+### Response caching
+
+```yaml
+plugins:
+  - name: response-cache
+    type: transform
+    stage: before_request
+    enabled: true
+    config:
+      max_age: 300      # seconds
+      max_entries: 1000
+```
+
+## Feature parity notes
+
+- **Portkey Hosted**: You are self-hosting. See [getting started](/getting-started/quickstart) for Docker and binary options.
+- **Semantic caching**: Portkey's vector-based semantic cache is not in the OSS gateway. The `response-cache` plugin uses exact-match (same model + messages hash).
+- **Portkey Guardrails** (PII, prompt injection): Available in [FerroCloud](https://ferrolabs.ai). See [OSS vs FerroCloud](/guides/oss-vs-ferrocloud) for the full comparison.
+- **Portkey Analytics dashboard**: Available in FerroCloud. The OSS gateway exposes structured logs via the `request-logger` plugin and a queryable admin API.

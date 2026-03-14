@@ -1,7 +1,7 @@
 ---
 title: Plugins
-description: All 12 built-in plugins in the Ferro Labs AI Gateway — PII redaction, prompt safety shield, response caching, request logging, rate limiting, budget controls, secret scanning, and schema validation.
-keywords: [AI gateway plugins, LLM guardrails, PII redaction AI, prompt safety AI, response caching LLM, secret scanning, prompt shield, AI safety, budget plugin, per-key rate limit]
+description: The 6 open-source built-in plugins in the Ferro Labs AI Gateway — word filtering, token limits, response caching, request logging, rate limiting, and spend budgets. Advanced security plugins (PII redaction, prompt injection shield, secret scanning) are available in FerroCloud.
+keywords: [AI gateway plugins, LLM plugins OSS, response caching LLM, request logging AI, rate limiting AI gateway, spend budget AI, word filter LLM]
 ---
 
 Plugins extend the request pipeline at three lifecycle stages:
@@ -11,6 +11,20 @@ Plugins extend the request pipeline at three lifecycle stages:
 - `on_error` — runs when the provider returns an error
 
 Each plugin entry in `config.yaml` has `name`, `type`, `stage`, `enabled`, and an optional `config` map. Disabled plugins (`enabled: false`) are ignored at runtime.
+
+| Plugin | Type | Stage | Open-source |
+|---|---|---|---|
+| `word-filter` | guardrail | before_request | ✅ |
+| `max-token` | guardrail | before_request | ✅ |
+| `response-cache` | transform | before_request | ✅ |
+| `request-logger` | logging | before_request | ✅ |
+| `rate-limit` | ratelimit | before_request | ✅ |
+| `budget` | budget | before_request + after_request | ✅ |
+| `pii-redact` | guardrail | before_request | [FerroCloud only](/guides/oss-vs-ferrocloud) |
+| `secret-scan` | guardrail | before_request | [FerroCloud only](/guides/oss-vs-ferrocloud) |
+| `prompt-shield` | guardrail | before_request | [FerroCloud only](/guides/oss-vs-ferrocloud) |
+| `schema-guard` | guardrail | after_request | [FerroCloud only](/guides/oss-vs-ferrocloud) |
+| `regex-guard` | guardrail | before_request | [FerroCloud only](/guides/oss-vs-ferrocloud) |
 
 ## Guardrail plugins
 
@@ -45,6 +59,10 @@ Enforces limits on token count, message count, and raw input length before the r
 
 ### pii-redact
 
+:::note FerroCloud only
+This plugin is available in [FerroCloud](https://ferrolabs.ai) managed deployments. It is not included in the open-source gateway.
+:::
+
 Detects Personally Identifiable Information (PII) in the request and either redacts it or blocks the request entirely.
 
 ```yaml
@@ -63,6 +81,10 @@ With `action: redact`, detected PII is replaced in-place before the request is f
 
 ### secret-scan
 
+:::note FerroCloud only
+This plugin is available in [FerroCloud](https://ferrolabs.ai) managed deployments. It is not included in the open-source gateway.
+:::
+
 Scans request content for leaked credentials, API keys, and secrets using pattern matching and (optionally) entropy analysis.
 
 ```yaml
@@ -76,6 +98,10 @@ Scans request content for leaked credentials, API keys, and secrets using patter
 ```
 
 ### prompt-shield
+
+:::note FerroCloud only
+This plugin is available in [FerroCloud](https://ferrolabs.ai) managed deployments. It is not included in the open-source gateway.
+:::
 
 Scores user messages for prompt injection attempts and blocks requests that exceed a configurable confidence threshold.
 
@@ -91,6 +117,10 @@ Scores user messages for prompt injection attempts and blocks requests that exce
 ```
 
 ### schema-guard
+
+:::note FerroCloud only
+This plugin is available in [FerroCloud](https://ferrolabs.ai) managed deployments. It is not included in the open-source gateway.
+:::
 
 Validates the model's JSON output against a JSON Schema. Runs `after_request`. Optionally extracts JSON from a text response before validating.
 
@@ -116,6 +146,10 @@ Validates the model's JSON output against a JSON Schema. Runs `after_request`. O
 ```
 
 ### regex-guard
+
+:::note FerroCloud only
+This plugin is available in [FerroCloud](https://ferrolabs.ai) managed deployments. It is not included in the open-source gateway.
+:::
 
 Blocks or warns on requests matching one or more regular expressions. Useful for custom business rules not covered by other guardrails.
 
@@ -173,7 +207,7 @@ When `persist: true`, requests are queryable at `GET /admin/logs`. See [Request 
 
 ### rate-limit
 
-Token-bucket rate limiting with global, per-API-key, and per-user granularity. Rejects requests with `429 Too Many Requests` when any applicable bucket is empty. Checks execute in order: global → per-key → per-user.
+Token-bucket rate limiting applied per request. Rejects requests with `429 Too Many Requests` when the bucket is empty.
 
 ```yaml
 - name: rate-limit
@@ -181,13 +215,9 @@ Token-bucket rate limiting with global, per-API-key, and per-user granularity. R
   stage: before_request
   enabled: true
   config:
-    requests_per_second: 50   # global limit; token bucket
-    burst: 100                # maximum burst above the steady-state rate
-    key_rpm: 60               # per-API-key limit (requests per minute)
-    user_rpm: 30              # per-user limit (requests per minute)
+    requests_per_second: 50
+    burst: 100
 ```
-
-`key_rpm` uses the API key from `pctx.Metadata["api_key"]`. Requests without an API key skip the per-key check. `user_rpm` uses `Request.User`; requests without a user skip the per-user check. All three limits are independent — you can configure any combination.
 
 For IP-level rate limiting (HTTP middleware layer), see [Rate limiting](/guides/rate-limiting).
 
@@ -195,36 +225,40 @@ For IP-level rate limiting (HTTP middleware layer), see [Rate limiting](/guides/
 
 ### budget
 
-Tracks cumulative USD spend per API key in an in-memory store and rejects requests once the configured limit is reached. Register the plugin at **both** lifecycle stages for full enforcement.
+Tracks cumulative USD spend per API key using an in-memory token-cost model. Must be registered at **both** `before_request` (to check the limit) and `after_request` (to record the cost). The two instances share state via `store_id`.
+
+Requests without an `api_key` in request metadata are not subject to budget enforcement.
+
+:::info In-memory only
+Spend data is in-memory and resets on gateway restart. Use this for session-scoped soft limits and development quotas. Durable billing enforcement is available in FerroCloud.
+:::
 
 ```yaml
 plugins:
-  - name: budget-check
+  # Check limit before forwarding
+  - name: budget
     type: budget
     stage: before_request
     enabled: true
     config:
-      store_id: default           # shared ID; instances with the same store_id share spend data
-      spend_limit_usd: 50.0       # max cumulative spend per API key (USD); 0 = unlimited
-      input_per_m_tokens: 3.0     # cost per 1M prompt tokens (USD)
-      output_per_m_tokens: 15.0   # cost per 1M completion tokens (USD)
-      max_keys: 10000             # max tracked keys; evicts lowest-spend key at cap
+      store_id: "default"         # shared between before/after instances
+      spend_limit_usd: 50.0       # max cumulative spend per API key (USD)
+      input_per_m_tokens: 3.0     # cost per 1M prompt tokens
+      output_per_m_tokens: 15.0   # cost per 1M completion tokens
+      max_keys: 10000             # max tracked API keys before eviction
 
-  - name: budget-record
+  # Record cost after response
+  - name: budget
     type: budget
     stage: after_request
     enabled: true
     config:
-      store_id: default           # same store_id → shares accumulated spend
+      store_id: "default"         # must match the before_request instance
       input_per_m_tokens: 3.0
       output_per_m_tokens: 15.0
 ```
 
-- The `before_request` instance checks the key's accumulated spend against `spend_limit_usd` and sets `reject: true` with reason `"budget exceeded"` if over limit.
-- The `after_request` instance records the cost of the completed request from `Response.Usage` token counts.
-- Two instances with the same `store_id` share the same spend store, so the check and record instances stay in sync.
-- `spend_limit_usd: 0` means unlimited — spend is tracked but requests are never rejected.
-- Spend data is in-memory and does not survive process restarts. For durable per-tenant billing enforcement, use FerroCloud's server-side budget controls.
+When the accumulated spend for an API key reaches `spend_limit_usd`, subsequent requests are rejected with `HTTP 429`.
 
 ## Plugin execution order
 

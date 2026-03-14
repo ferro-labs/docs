@@ -125,6 +125,21 @@ curl -H "Authorization: Bearer $ADMIN_API_KEY" \
   http://localhost:8080/admin/mcp/tools
 ```
 
+## Streaming requests
+
+Since **v1.0.0-rc.1**, clients may send `stream: true` when MCP servers are configured. The gateway transparently redirects streaming requests through the full agentic loop — all tool calls are resolved inside the gateway, and the final text answer is returned as a single-chunk stream response. Clients receive correct SSE output without needing to handle intermediate tool-call messages.
+
+```python
+# stream: true works — final answer is delivered via SSE after the tool loop completes
+response = client.chat.completions.create(
+    model="claude-3-5-sonnet-20241022",
+    stream=True,
+    messages=[{"role": "user", "content": "List the failing tests in gateway_test.go"}],
+)
+for chunk in response:
+    print(chunk.choices[0].delta.content or "", end="")
+```
+
 ## Example: filesystem tools
 
 Start a local filesystem MCP server and connect it to the gateway:

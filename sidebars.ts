@@ -45,6 +45,7 @@ const sidebars: SidebarsConfig = {
           items: [
             'guides/plugins',
             'guides/mcp',
+            'guides/prompt-templates',
             'guides/rate-limiting',
           ],
         },
@@ -64,6 +65,31 @@ const sidebars: SidebarsConfig = {
           collapsed: false,
           items: [
             'guides/observability',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Migration',
+          collapsed: true,
+          items: [
+            'guides/migration-litellm',
+            'guides/migration-portkey',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Deployment',
+          collapsed: true,
+          items: [
+            'guides/kubernetes',
+          ],
+        },
+        {
+          type: 'category',
+          label: 'Compare',
+          collapsed: true,
+          items: [
+            'guides/oss-vs-ferrocloud',
           ],
         },
       ],
