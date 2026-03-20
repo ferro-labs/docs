@@ -102,9 +102,9 @@ const config: Config = {
       { name: 'twitter:site', content: '@ferroLabsAI' },
     ],
     announcementBar: {
-      id: 'v080-mcp',
+      id: 'ferrocloud-coming-soon',
       content:
-        '✨ <strong>v0.8.0</strong> is out — MCP integration (Model Context Protocol) is now available. <a href="/guides/mcp">Read the docs →</a>',
+        'Join <strong>FerroCloud</strong> coming soon. LLM observability data, optimizes prompts and models, sets up evals, and runs A/B tests. <a href="https://www.ferrolabs.ai/" target="_blank" rel="noopener noreferrer">Join the waitlist →</a>',
       backgroundColor: '#ecfdf5',
       textColor: '#065f46',
       isCloseable: true,
@@ -180,7 +180,7 @@ const config: Config = {
           items: [
             { label: '⭐  Star on GitHub', href: 'https://github.com/ferro-labs/ai-gateway' },
             { label: '🐛  Report an Issue', href: 'https://github.com/ferro-labs/ai-gateway/issues' },
-            { label: '💬  Discussions', href: 'https://github.com/ferro-labs/ai-gateway/discussions' },
+            { label: '💬  Discussions', href: 'https://discord.gg/yCAeYvJeDV' },
             { label: '🎮  Discord', href: 'https://discord.gg/yCAeYvJeDV' },
             { label: '𝕏  Follow on X', href: 'https://x.com/ferroLabsAI' },
           ],
