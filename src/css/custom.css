@@ -166,11 +166,11 @@
  * Each nth-child rule opts in by setting content: '' + the icon URL.
  *
  * Top-level layout:
- * 1: intro (doc)         6: API Reference (link)   11: enterprise (doc)
- * 2: Getting Started     7: SDKs                   12: changelog (doc)
- * 3: Guides              8: Operations
- * 4: Performance         9: Security
- * 5: Ferro Labs Managed  10: Support
+ * 1: intro (doc) → house          6: API Reference (link) → code   11: enterprise (doc) → building
+ * 2: Getting Started → rocket     7: SDKs → cube                   12: changelog (doc) → clock-rotate-left
+ * 3: Guides → book                8: Operations → server
+ * 4: Performance → bolt           9: Security → shield
+ * 5: Ferro Labs Managed → cloud   10: Support → circle-question
  */
 
 .menu__list > .menu__list-item > .menu__list-item-collapsible > .menu__link::before {
@@ -243,6 +243,62 @@
 .theme-doc-sidebar-menu > .menu__list > .menu__list-item:nth-child(10) > .menu__list-item-collapsible > .menu__link::before {
   content: '';
   --sidebar-icon-url: url('https://d3gk2c5xim1je2.cloudfront.net/v7.1.0/regular/circle-question.svg');
+}
+
+/* ── Top-level standalone doc / link icons ────────────────────── */
+
+/* Shared style for standalone items (docs + links without collapsible wrappers) */
+.theme-doc-sidebar-menu > .menu__list > .menu__list-item > a.menu__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.95rem;
+  font-weight: 650;
+}
+
+.theme-doc-sidebar-menu > .menu__list > .menu__list-item > a.menu__link::before {
+  content: none;
+}
+
+.theme-doc-sidebar-menu > .menu__list > .menu__list-item > a.menu__link[class]::before {
+  display: inline-block;
+  width: 0.9rem;
+  height: 0.9rem;
+  flex: 0 0 0.9rem;
+  background-color: currentColor;
+  opacity: 0.8;
+  -webkit-mask-image: var(--sidebar-icon-url);
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+  mask-image: var(--sidebar-icon-url);
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+}
+
+/* 1: intro → house */
+.theme-doc-sidebar-menu > .menu__list > .menu__list-item:nth-child(1) > a.menu__link::before {
+  content: '';
+  --sidebar-icon-url: url('https://d3gk2c5xim1je2.cloudfront.net/v7.1.0/regular/house.svg');
+}
+
+/* 6: API Reference → code */
+.theme-doc-sidebar-menu > .menu__list > .menu__list-item:nth-child(6) > a.menu__link::before {
+  content: '';
+  --sidebar-icon-url: url('https://d3gk2c5xim1je2.cloudfront.net/v7.1.0/regular/code.svg');
+}
+
+/* 11: Enterprise → building */
+.theme-doc-sidebar-menu > .menu__list > .menu__list-item:nth-child(11) > a.menu__link::before {
+  content: '';
+  --sidebar-icon-url: url('https://d3gk2c5xim1je2.cloudfront.net/v7.1.0/regular/building.svg');
+}
+
+/* 12: Changelog → clock-rotate-left */
+.theme-doc-sidebar-menu > .menu__list > .menu__list-item:nth-child(12) > a.menu__link::before {
+  content: '';
+  --sidebar-icon-url: url('https://d3gk2c5xim1je2.cloudfront.net/v7.1.0/regular/clock-rotate-left.svg');
 }
 
 /* ── Guides subcategory icons (nested inside top-level item 3) ── */
