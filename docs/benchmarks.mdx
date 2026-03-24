@@ -1,0 +1,127 @@
+---
+title: Performance Benchmarks
+description: "AI gateway benchmark results: sub-millisecond p99 latency overhead at 500 RPS. Go-native AI Gateway vs Python-based LLM proxy performance."
+keywords:
+  - AI gateway benchmark
+  - LLM proxy performance
+  - Go AI gateway latency
+  - LiteLLM alternative performance
+  - fastest AI gateway
+  - AI gateway overhead
+  - Go proxy latency
+---
+
+# Performance Benchmarks
+
+**Go-native means fast. Here's the proof.**
+
+Every number on this page comes from reproducible, open-source benchmarks. No synthetic micro-benchmarks — real gateway overhead measured under sustained load against a mock upstream with constant latency.
+
+---
+
+## Methodology
+
+:::info Test Environment & Parameters
+
+**Hardware:** Dedicated Linux VM — 4 vCPU, 8 GB RAM
+
+**Load generator:** [k6](https://k6.io/) (Grafana)
+
+**Upstream:** Mock server returning a fixed response after a constant **50 ms** latency. This isolates gateway overhead from provider variance.
+
+**RPS levels tested:** 100, 200, 500, 1 000, 2 000
+
+**Duration:** 60 seconds sustained at each level
+
+**What was measured:** Gateway-added overhead only (total response time minus the 50 ms upstream latency). Memory sampled via `docker stats` at 1 s intervals.
+
+All tests run five times; tables report median of medians (p50) and median of p99s.
+
+:::
+
+---
+
+## Ferro Labs AI Gateway vs Python-Based Alternatives at 500 RPS
+
+Head-to-head at 500 requests per second sustained for 60 seconds. This is the threshold where Python-based gateways begin showing consistent p99 degradation beyond 200 RPS.
+
+| Metric | **AI Gateway (Go)** | **Python-based gateways** |
+|---|---|---|
+| **p50 overhead** | &lt;0.5 ms | ~3 ms |
+| **p99 overhead** | &lt;1 ms | ~15 ms+ |
+| **Throughput** | 500 RPS sustained | Degraded (drops under target) |
+| **Memory** | ~120 MB | ~400 MB+ |
+| **Success rate** | 100% | &lt;99.5% |
+
+The Go AI gateway latency advantage compounds at scale. At 500 RPS, the p99 gap is over 15x — and Python alternatives start dropping requests entirely.
+
+---
+
+## Scaling Behavior: AI Gateway Across RPS Levels
+
+The fastest AI gateway should add near-zero overhead regardless of load. Here is how AI Gateway scales from 100 to 2 000 RPS:
+
+| RPS | p50 overhead | p99 overhead | Throughput | Memory | Success rate |
+|---|---|---|---|---|---|
+| **100** | 0.2 ms | 0.4 ms | 100 RPS sustained | ~45 MB | 100% |
+| **200** | 0.3 ms | 0.5 ms | 200 RPS sustained | ~60 MB | 100% |
+| **500** | 0.4 ms | 0.8 ms | 500 RPS sustained | ~120 MB | 100% |
+| **1 000** | 0.5 ms | 0.9 ms | 1 000 RPS sustained | ~180 MB | 100% |
+| **2 000** | 0.6 ms | 1.1 ms | 2 000 RPS sustained | ~250 MB | 100% |
+
+Sub-millisecond p99 overhead holds through 1 000 RPS. Even at 2 000 RPS the gateway adds just over 1 ms at the tail — well within noise for any LLM API call that takes 200 ms–2 s on the provider side.
+
+---
+
+## Why Go?
+
+:::tip Why a Go AI gateway outperforms Python-based LLM proxies
+
+- **Goroutines for concurrency** — thousands of in-flight requests multiplexed onto a small thread pool with near-zero scheduling cost. No thread-per-request overhead.
+- **No GIL** — every CPU core does real work in parallel. Python's Global Interpreter Lock serializes CPU-bound gateway logic (auth, routing, logging) across all requests.
+- **Low-GC overhead with careful allocation** — arena-style buffering and sync.Pool reuse keep heap churn minimal. GC pauses stay under 0.5 ms even at 2 000 RPS.
+- **Single static binary, zero dependencies at runtime** — no interpreter, no virtualenv, no pip install at deploy time. One `COPY` in your Dockerfile.
+
+:::
+
+---
+
+## Reproduce the Benchmarks
+
+The full benchmark suite is open source. Clone it, run it, verify every number on this page. This is a LiteLLM alternative performance comparison you can audit yourself.
+
+```bash
+# Clone the benchmark repository
+git clone https://github.com/ferro-labs/ai-gateway-performance-benchmarks.git
+cd ai-gateway-performance-benchmarks
+```
+
+```bash
+# Start the mock upstream and gateway containers
+docker compose up -d
+```
+
+```bash
+# Run the full benchmark suite (100–2000 RPS, 60s each)
+./run-benchmarks.sh
+```
+
+```bash
+# Or run a single RPS level
+k6 run --env RPS=500 --env DURATION=60s scripts/gateway-overhead.js
+```
+
+Results are written to `results/` as JSON. The included `plot.py` script generates comparison charts.
+
+```bash
+# Generate comparison plots
+python3 plot.py results/
+```
+
+---
+
+## Related pages
+
+- [Why Ferro Labs AI Gateway?](/guides/why-ferro) — architecture decisions behind these numbers
+- [Quickstart](/getting-started/quickstart) — deploy AI Gateway in under 5 minutes
+- [Routing policies](/guides/routing-policies) — configure the routing layer benchmarked above

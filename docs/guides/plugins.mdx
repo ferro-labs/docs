@@ -1,6 +1,6 @@
 ---
 title: Plugins
-description: The 6 open-source built-in plugins in the Ferro Labs AI Gateway — word filtering, token limits, response caching, request logging, rate limiting, and spend budgets. Advanced security plugins (PII redaction, prompt injection shield, secret scanning) are available in FerroCloud.
+description: The 6 open-source built-in plugins in the Ferro Labs AI Gateway — word filtering, token limits, response caching, request logging, rate limiting, and spend budgets. Advanced security plugins (PII redaction, prompt injection shield, secret scanning) are available in Ferro Labs Managed.
 keywords: [AI gateway plugins, LLM plugins OSS, response caching LLM, request logging AI, rate limiting AI gateway, spend budget AI, word filter LLM]
 ---
 
@@ -20,11 +20,11 @@ Each plugin entry in `config.yaml` has `name`, `type`, `stage`, `enabled`, and a
 | `request-logger` | logging | before_request | ✅ |
 | `rate-limit` | ratelimit | before_request | ✅ |
 | `budget` | budget | before_request + after_request | ✅ |
-| `pii-redact` | guardrail | before_request | [FerroCloud only](/guides/oss-vs-ferrocloud) |
-| `secret-scan` | guardrail | before_request | [FerroCloud only](/guides/oss-vs-ferrocloud) |
-| `prompt-shield` | guardrail | before_request | [FerroCloud only](/guides/oss-vs-ferrocloud) |
-| `schema-guard` | guardrail | after_request | [FerroCloud only](/guides/oss-vs-ferrocloud) |
-| `regex-guard` | guardrail | before_request | [FerroCloud only](/guides/oss-vs-ferrocloud) |
+| `pii-redact` | guardrail | before_request | [Ferro Labs Managed only](/guides/oss-vs-ferrocloud) |
+| `secret-scan` | guardrail | before_request | [Ferro Labs Managed only](/guides/oss-vs-ferrocloud) |
+| `prompt-shield` | guardrail | before_request | [Ferro Labs Managed only](/guides/oss-vs-ferrocloud) |
+| `schema-guard` | guardrail | after_request | [Ferro Labs Managed only](/guides/oss-vs-ferrocloud) |
+| `regex-guard` | guardrail | before_request | [Ferro Labs Managed only](/guides/oss-vs-ferrocloud) |
 
 ## Guardrail plugins
 
@@ -59,8 +59,8 @@ Enforces limits on token count, message count, and raw input length before the r
 
 ### pii-redact
 
-:::note FerroCloud only
-This plugin is available in [FerroCloud](https://ferrolabs.ai) managed deployments. It is not included in the open-source gateway.
+:::note Ferro Labs Managed only
+This plugin is available in [Ferro Labs Managed](https://ferrolabs.ai) managed deployments. It is not included in the open-source gateway.
 :::
 
 Detects Personally Identifiable Information (PII) in the request and either redacts it or blocks the request entirely.
@@ -81,8 +81,8 @@ With `action: redact`, detected PII is replaced in-place before the request is f
 
 ### secret-scan
 
-:::note FerroCloud only
-This plugin is available in [FerroCloud](https://ferrolabs.ai) managed deployments. It is not included in the open-source gateway.
+:::note Ferro Labs Managed only
+This plugin is available in [Ferro Labs Managed](https://ferrolabs.ai) managed deployments. It is not included in the open-source gateway.
 :::
 
 Scans request content for leaked credentials, API keys, and secrets using pattern matching and (optionally) entropy analysis.
@@ -99,8 +99,8 @@ Scans request content for leaked credentials, API keys, and secrets using patter
 
 ### prompt-shield
 
-:::note FerroCloud only
-This plugin is available in [FerroCloud](https://ferrolabs.ai) managed deployments. It is not included in the open-source gateway.
+:::note Ferro Labs Managed only
+This plugin is available in [Ferro Labs Managed](https://ferrolabs.ai) managed deployments. It is not included in the open-source gateway.
 :::
 
 Scores user messages for prompt injection attempts and blocks requests that exceed a configurable confidence threshold.
@@ -118,8 +118,8 @@ Scores user messages for prompt injection attempts and blocks requests that exce
 
 ### schema-guard
 
-:::note FerroCloud only
-This plugin is available in [FerroCloud](https://ferrolabs.ai) managed deployments. It is not included in the open-source gateway.
+:::note Ferro Labs Managed only
+This plugin is available in [Ferro Labs Managed](https://ferrolabs.ai) managed deployments. It is not included in the open-source gateway.
 :::
 
 Validates the model's JSON output against a JSON Schema. Runs `after_request`. Optionally extracts JSON from a text response before validating.
@@ -147,8 +147,8 @@ Validates the model's JSON output against a JSON Schema. Runs `after_request`. O
 
 ### regex-guard
 
-:::note FerroCloud only
-This plugin is available in [FerroCloud](https://ferrolabs.ai) managed deployments. It is not included in the open-source gateway.
+:::note Ferro Labs Managed only
+This plugin is available in [Ferro Labs Managed](https://ferrolabs.ai) managed deployments. It is not included in the open-source gateway.
 :::
 
 Blocks or warns on requests matching one or more regular expressions. Useful for custom business rules not covered by other guardrails.
@@ -230,7 +230,7 @@ Tracks cumulative USD spend per API key using an in-memory token-cost model. Mus
 Requests without an `api_key` in request metadata are not subject to budget enforcement.
 
 :::info In-memory only
-Spend data is in-memory and resets on gateway restart. Use this for session-scoped soft limits and development quotas. Durable billing enforcement is available in FerroCloud.
+Spend data is in-memory and resets on gateway restart. Use this for session-scoped soft limits and development quotas. Durable billing enforcement is available in Ferro Labs Managed.
 :::
 
 ```yaml

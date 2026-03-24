@@ -1,14 +1,16 @@
 ---
 title: Migrate from LiteLLM
 description: Step-by-step guide to replace LiteLLM with the Ferro Labs AI Gateway — swap the base URL and API key, convert provider configs, and retain existing retry and fallback logic.
-keywords: [LiteLLM migration, LiteLLM alternative, LiteLLM vs Ferro Gateway, migrate from LiteLLM, LLM proxy migration]
+keywords: [LiteLLM migration, LiteLLM alternative, LiteLLM vs Ferro Labs Labs AI Gateway, migrate from LiteLLM, LLM proxy migration]
 ---
 
-The Ferro Labs AI Gateway is a drop-in replacement for LiteLLM Proxy. Because both products implement the OpenAI Chat Completions API, migration is usually a base-URL swap and a config file rewrite.
+The Ferro Labs AI Gateway is a drop-in replacement for LiteLLM Proxy. Because both products implement the OpenAI Chat Completions API, migration is usually a base-URL swap and a config file rewrite. As of v1.0.0, the gateway is a stable release with semver guarantees — your config format and API surface are locked in.
+
+For a detailed comparison of Ferro Labs vs LiteLLM and other alternatives, see [Why Ferro Labs](/guides/why-ferro).
 
 ## What changes
 
-| Concept | LiteLLM | Ferro Gateway |
+| Concept | LiteLLM | Ferro Labs AI Gateway |
 |---|---|---|
 | Proxy config | `config.yaml` with `model_list` | `config.yaml` with `providers` + `targets` |
 | Provider credentials | `LITELLM_*` env vars | `virtual_keys` block or `FERRO_*` env vars |
@@ -50,7 +52,7 @@ router_settings:
     - gpt-4o: [claude-3-5-sonnet]
 ```
 
-### Ferro Gateway config (after)
+### Ferro Labs AI Gateway config (after)
 
 ```yaml
 providers:
@@ -83,7 +85,7 @@ client = OpenAI(
     base_url="http://0.0.0.0:4000",
 )
 
-# After (Ferro Gateway)
+# After (Ferro Labs AI Gateway)
 from openai import OpenAI
 client = OpenAI(
     api_key="sk-your-openai-key",
@@ -166,7 +168,7 @@ plugins:
 
 ## Feature parity notes
 
-- **LiteLLM UI** (spend dashboard, model management): Available in [FerroCloud](https://ferrolabs.ai). The OSS gateway exposes an admin REST API for programmatic access.
-- **Virtual keys / teams**: In FerroCloud. The OSS gateway supports API key passthrough via the `virtual_keys` config block.
-- **Spend tracking**: The `budget` plugin provides in-memory per-key limits. Durable billing is in FerroCloud.
-- **PII redaction, prompt injection detection**: FerroCloud only. See [OSS vs FerroCloud](/guides/oss-vs-ferrocloud).
+- **LiteLLM UI** (spend dashboard, model management): Available in [Ferro Labs Managed](https://ferrolabs.ai). The OSS gateway exposes an admin REST API for programmatic access.
+- **Virtual keys / teams**: In Ferro Labs Managed. The OSS gateway supports API key passthrough via the `virtual_keys` config block.
+- **Spend tracking**: The `budget` plugin provides in-memory per-key limits. Durable billing is in Ferro Labs Managed.
+- **PII redaction, prompt injection detection**: Ferro Labs Managed only. See [OSS vs Ferro Labs Managed](/guides/oss-vs-ferrocloud).

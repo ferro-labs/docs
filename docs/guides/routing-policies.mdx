@@ -1,14 +1,16 @@
 ---
 title: Routing policies
-description: All 8 LLM routing strategies in the Ferro Labs AI Gateway — single, fallback, weighted, conditional, least-latency, cost-optimized, content-based, and A/B test routing for multi-provider AI traffic.
+description: "All 8 LLM routing strategies in the Ferro Labs AI Gateway — single, fallback, weighted, conditional, least-latency, cost-optimized, content-based, and A/B test routing for multi-provider AI traffic."
 keywords: [LLM routing strategies, AI fallback routing, weighted LLM routing, cost-optimized AI routing, AI load balancing, least-latency routing, content-based routing, ab-test routing]
 ---
 
-The gateway implements eight routing strategies. Set `strategy.mode` in `config.yaml` to choose one.
+Most AI gateways offer 2–3 routing modes. Ferro Labs ships 8 — covering everything from simple single-provider setups to content-aware routing and live A/B testing. Set `strategy.mode` in `config.yaml` to choose one.
 
 ## Single
 
-Always routes to the first target. Best for single-provider setups.
+Always routes to the first target. Best for single-provider setups or when you want explicit control.
+
+**Use this when:** you have one provider and want the simplest possible config.
 
 ```yaml
 strategy:
@@ -18,9 +20,15 @@ targets:
   - virtual_key: openai
 ```
 
+:::tip Performance
+Single is the lightest strategy — zero overhead beyond the proxy hop. Ideal for latency-sensitive single-provider deployments.
+:::
+
 ## Fallback
 
 Tries targets in order. On failure (error or retryable status code), the next target is attempted with exponential backoff. Use this for high-availability setups.
+
+**Use this when:** uptime matters more than anything — your chatbot must always respond, even if the primary provider is down.
 
 ```yaml
 strategy:
@@ -39,9 +47,15 @@ targets:
 
 If all targets fail, the last error is returned to the client.
 
+:::tip Pro tip
+Combine fallback with circuit breakers to skip providers that are consistently failing, rather than waiting for retries to timeout on every request.
+:::
+
 ## Weighted load balancing
 
 Distributes requests across targets by weight. Weights are relative — a weight of `70` and `30` sends 70% to the first target and 30% to the second.
+
+**Use this when:** you want to spread load across providers for cost or capacity reasons.
 
 ```yaml
 strategy:
@@ -56,9 +70,15 @@ targets:
 
 Only targets that support the requested model are candidates for selection.
 
+:::tip Performance
+Weight evaluation adds negligible overhead — a single random number generation per request. Equivalent to single-strategy latency for practical purposes.
+:::
+
 ## Conditional
 
 Evaluates rules in order. The first matching rule determines the target. Use `model` for exact match or `model_prefix` for prefix match.
+
+**Use this when:** different models should route to specific providers — e.g., all GPT models to OpenAI, all Claude models to Anthropic.
 
 ```yaml
 strategy:
@@ -85,9 +105,15 @@ targets:
 
 If no rule matches, the request falls through to the first target.
 
+:::tip Pro tip
+Conditional routing pairs well with [model aliases](/getting-started/configuration#model-aliases). Alias `smart` → `claude-3-5-sonnet-20241022`, then add a conditional rule for `model_prefix: claude`.
+:::
+
 ## Least-latency
 
 Routes to the target with the lowest P50 latency as measured by a rolling latency tracker. On a cold start (no latency data yet) it picks a target randomly.
+
+**Use this when:** you have multiple fast providers and want to minimise time-to-first-token automatically.
 
 ```yaml
 strategy:
@@ -99,11 +125,15 @@ targets:
   - virtual_key: anthropic
 ```
 
-Useful when you have multiple fast providers and want to minimise time-to-first-token automatically.
+:::tip Performance
+Adds a mutex read on the rolling latency map per request — typically under 1µs. The latency tracker updates asynchronously after each response, so it does not add to request latency.
+:::
 
 ## Cost-optimized
 
 Uses the built-in model catalog (2,500+ entries with pricing data) to estimate the input token cost for each target, then routes to the cheapest compatible provider. Falls back to the first compatible target if cost data is unavailable.
+
+**Use this when:** you want to minimize spend without manually choosing models — let the catalog handle it.
 
 ```yaml
 strategy:
@@ -118,9 +148,15 @@ targets:
 
 Cost estimation uses the model name in the request and the catalog's `input_cost_per_token` field. The target with the lowest estimated cost for the matched model wins.
 
+:::tip Pro tip
+Combine cost-optimized with fallback by adding `retry` to each target — if the cheapest provider fails, the gateway retries with the next cheapest.
+:::
+
 ## Content-based
 
 Routes based on the content of the user's messages. Rules are evaluated in order; the first match wins. If no rule matches, the request falls through to the first target.
+
+**Use this when:** different types of queries should go to different specialized models — code to a coding model, translation to a translation service, general chat to a cost-efficient default.
 
 Three condition types are supported:
 
@@ -152,11 +188,15 @@ targets:
   - virtual_key: anthropic
 ```
 
-**When to use:** Route coding questions to a code-specialised model, translation requests to a dedicated translation provider, and general chat to a cost-efficient default — all without client-side logic.
+:::tip Performance
+Substring matching (`prompt_contains`) is near-zero cost. Regex matching adds overhead proportional to pattern complexity, but patterns are pre-compiled at startup so the hot path is a single `regexp.MatchString` call.
+:::
 
 ## A/B test
 
 Splits traffic across variants by configured weights. Every routed request is tagged with the `label` field for downstream observability (e.g., in `request-logger` output or analytics pipelines).
+
+**Use this when:** you want to compare quality, latency, or cost between two providers on live traffic without client-side changes.
 
 ```yaml
 strategy:
@@ -174,9 +214,13 @@ targets:
   - virtual_key: anthropic
 ```
 
-Weights are relative — `70` and `30` send 70 % of traffic to `openai` and 30 % to `anthropic`. If a weight is `0`, the variant is treated as weight `1` (equal distribution with remaining variants). Negative weights are rejected at gateway startup.
+Weights are relative — `70` and `30` send 70% of traffic to `openai` and 30% to `anthropic`. If a weight is `0`, the variant is treated as weight `1` (equal distribution with remaining variants). Negative weights are rejected at gateway startup.
 
-**When to use:** Compare quality or cost between two providers on live traffic. The `label` field is emitted in every `gateway.request.completed` event so you can aggregate results per variant.
+The `label` field is emitted in every `gateway.request.completed` event so you can aggregate results per variant.
+
+:::tip Pro tip
+Combine A/B test with the `request-logger` plugin persisting to Postgres, then query `SELECT ab_variant, AVG(latency_ms), AVG(total_tokens) FROM requests GROUP BY ab_variant` to compare variants.
+:::
 
 ## Combining strategies with circuit breakers
 
@@ -192,3 +236,10 @@ targets:
 ```
 
 The circuit breaker opens after `failure_threshold` consecutive failures, stays open for `timeout`, then enters half-open state where it allows one probe request. After `success_threshold` successes it closes again.
+
+## Related pages
+
+- [Configuration reference](/getting-started/configuration) — full YAML reference for all strategy modes
+- [Use cases](/guides/use-cases) — recipe-style configurations for common scenarios
+- [Benchmarks](/benchmarks) — performance data for different routing strategies
+- [Plugins](/guides/plugins) — combine routing with safety and observability plugins

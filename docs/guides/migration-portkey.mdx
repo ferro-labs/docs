@@ -1,14 +1,16 @@
 ---
 title: Migrate from Portkey
 description: Step-by-step guide to replace Portkey with the Ferro Labs AI Gateway — configure providers and virtual keys, convert gateway configs, and set up routing strategies.
-keywords: [Portkey migration, Portkey alternative, Portkey vs Ferro Gateway, migrate from Portkey, LLM router migration]
+keywords: [Portkey migration, Portkey alternative, Portkey vs Ferro Labs Labs AI Gateway, migrate from Portkey, LLM router migration]
 ---
 
-The Ferro Labs AI Gateway is a self-hosted alternative to Portkey. Both expose an OpenAI-compatible endpoint, so migration requires a base-URL change and a config-file rewrite.
+The Ferro Labs AI Gateway is a self-hosted alternative to Portkey. Both expose an OpenAI-compatible endpoint, so migration requires a base-URL change and a config-file rewrite. As of v1.0.0, the gateway is a stable release with semver guarantees — your config format and API surface are locked in.
+
+For a detailed comparison of Ferro Labs vs Portkey and other alternatives, see [Why Ferro Labs](/guides/why-ferro).
 
 ## What changes
 
-| Concept | Portkey | Ferro Gateway |
+| Concept | Portkey | Ferro Labs AI Gateway |
 |---|---|---|
 | Provider credentials | Portkey dashboard virtual keys | `providers` block in `config.yaml` |
 | Gateway request header | `x-portkey-api-key` + `x-portkey-config` | Standard `Authorization: Bearer` header |
@@ -46,7 +48,7 @@ Portkey uses JSON config objects passed via header or dashboard:
 }
 ```
 
-### Ferro Gateway config (after)
+### Ferro Labs AI Gateway config (after)
 
 ```yaml
 providers:
@@ -87,7 +89,7 @@ client = OpenAI(
     ),
 )
 
-# After (Ferro Gateway)
+# After (Ferro Labs AI Gateway)
 from openai import OpenAI
 
 client = OpenAI(
@@ -141,7 +143,7 @@ targets:
 
 ### Prompt templates
 
-Portkey Prompt Library → Ferro `prompt_templates`:
+Portkey Prompt Library → Ferro Labs `prompt_templates`:
 
 ```yaml
 prompt_templates:
@@ -179,5 +181,5 @@ plugins:
 
 - **Portkey Hosted**: You are self-hosting. See [getting started](/getting-started/quickstart) for Docker and binary options.
 - **Semantic caching**: Portkey's vector-based semantic cache is not in the OSS gateway. The `response-cache` plugin uses exact-match (same model + messages hash).
-- **Portkey Guardrails** (PII, prompt injection): Available in [FerroCloud](https://ferrolabs.ai). See [OSS vs FerroCloud](/guides/oss-vs-ferrocloud) for the full comparison.
-- **Portkey Analytics dashboard**: Available in FerroCloud. The OSS gateway exposes structured logs via the `request-logger` plugin and a queryable admin API.
+- **Portkey Guardrails** (PII, prompt injection): Available in [Ferro Labs Managed](https://ferrolabs.ai). See [OSS vs Ferro Labs Managed](/guides/oss-vs-ferrocloud) for the full comparison.
+- **Portkey Analytics dashboard**: Available in Ferro Labs Managed. The OSS gateway exposes structured logs via the `request-logger` plugin and a queryable admin API.

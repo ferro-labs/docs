@@ -1,0 +1,470 @@
+---
+title: Common Use Cases
+description: "Recipe-style AI Gateway configurations for failover, cost optimization, A/B testing, content routing, rate-limited free tiers, and agentic MCP pipelines."
+keywords: [AI gateway use cases, LLM failover config, AI cost optimization, A/B test LLM, content-based routing AI, MCP agentic pipeline]
+---
+
+Complete, copy-pasteable configurations for the most common deployment patterns. Each recipe includes a full `config.yaml` and a `curl` command you can run immediately.
+
+## 1. Multi-provider failover for a production chatbot
+
+Route every request to OpenAI first. If OpenAI fails or returns a retryable status code, fall through to Anthropic, then Gemini. Circuit breakers prevent hammering a provider that is down.
+
+```yaml title="config.yaml"
+listeners:
+  - address: 0.0.0.0
+    port: 8080
+
+providers:
+  - name: openai
+    type: openai
+    api_key: ${OPENAI_API_KEY}
+    models:
+      - gpt-4o
+      - gpt-4o-mini
+
+  - name: anthropic
+    type: anthropic
+    api_key: ${ANTHROPIC_API_KEY}
+    models:
+      - claude-sonnet-4-20250514
+      - claude-haiku-4-20250414
+
+  - name: gemini
+    type: google
+    api_key: ${GEMINI_API_KEY}
+    models:
+      - gemini-2.0-flash
+
+strategy:
+  mode: fallback
+
+targets:
+  - virtual_key: openai
+    retry:
+      attempts: 3
+      retry_on_status: [429, 502, 503, 504]
+    circuit_breaker:
+      failure_threshold: 5
+      success_threshold: 2
+      timeout: "30s"
+  - virtual_key: anthropic
+    retry:
+      attempts: 2
+      retry_on_status: [429, 502, 503]
+    circuit_breaker:
+      failure_threshold: 3
+      success_threshold: 2
+      timeout: "20s"
+  - virtual_key: gemini
+    retry:
+      attempts: 2
+    circuit_breaker:
+      failure_threshold: 5
+      success_threshold: 2
+      timeout: "45s"
+```
+
+```bash
+curl -s http://localhost:8080/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $API_KEY" \
+  -d '{
+    "model": "gpt-4o",
+    "messages": [
+      {"role": "user", "content": "What is the capital of France?"}
+    ]
+  }'
+```
+
+If OpenAI returns a `429` or `5xx`, the gateway automatically retries up to 3 times with exponential backoff, then falls through to Anthropic (translating the request format on the fly), and finally to Gemini. The client sees a single response with no indication of the failover.
+
+---
+
+## 2. Cost optimization: route to the cheapest compatible model
+
+The `cost-optimized` strategy uses the built-in model catalog (2,500+ entries with pricing data) to estimate the input token cost for each target and routes to the cheapest one.
+
+```yaml title="config.yaml"
+listeners:
+  - address: 0.0.0.0
+    port: 8080
+
+providers:
+  - name: together
+    type: together
+    api_key: ${TOGETHER_API_KEY}
+    models:
+      - meta-llama/Llama-3.1-70B-Instruct
+
+  - name: deepseek
+    type: deepseek
+    api_key: ${DEEPSEEK_API_KEY}
+    models:
+      - deepseek-chat
+
+  - name: gemini
+    type: google
+    api_key: ${GEMINI_API_KEY}
+    models:
+      - gemini-2.0-flash
+
+  - name: openai
+    type: openai
+    api_key: ${OPENAI_API_KEY}
+    models:
+      - gpt-4o-mini
+
+strategy:
+  mode: cost-optimized
+
+targets:
+  - virtual_key: together
+  - virtual_key: deepseek
+  - virtual_key: gemini
+  - virtual_key: openai
+```
+
+```bash
+curl -s http://localhost:8080/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $API_KEY" \
+  -d '{
+    "model": "gpt-4o-mini",
+    "messages": [
+      {"role": "user", "content": "Summarize the benefits of serverless architecture in 3 bullet points."}
+    ]
+  }'
+```
+
+The gateway estimates the input token cost across all targets with a compatible model, then routes the request to the cheapest provider. If cost data is unavailable for a target, it falls back to the first compatible target in the list. Check the `x-ferro-target` response header to see which provider was selected.
+
+---
+
+## 3. A/B test: compare GPT-4o vs Claude on 20% of traffic
+
+Split live traffic between two providers. Every request is tagged with a variant label so you can aggregate quality metrics downstream.
+
+```yaml title="config.yaml"
+listeners:
+  - address: 0.0.0.0
+    port: 8080
+
+providers:
+  - name: openai
+    type: openai
+    api_key: ${OPENAI_API_KEY}
+    models:
+      - gpt-4o
+
+  - name: anthropic
+    type: anthropic
+    api_key: ${ANTHROPIC_API_KEY}
+    models:
+      - claude-sonnet-4-20250514
+
+strategy:
+  mode: ab-test
+  ab_variants:
+    - target_key: openai
+      weight: 80
+      label: control
+    - target_key: anthropic
+      weight: 20
+      label: challenger
+
+targets:
+  - virtual_key: openai
+  - virtual_key: anthropic
+
+plugins:
+  - name: request-logger
+    type: postgres-logger
+    connection_string: postgres://ferro:ferro_secret@postgres:5432/ferro_logs?sslmode=disable
+    log_request_body: true
+    log_response_body: true
+```
+
+```bash
+# Send a request and check which variant was selected
+curl -s http://localhost:8080/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $API_KEY" \
+  -d '{
+    "model": "gpt-4o",
+    "messages": [
+      {"role": "user", "content": "Explain quantum entanglement in simple terms."}
+    ]
+  }'
+```
+
+The `label` field (`control` or `challenger`) is emitted in every `gateway.request.completed` log event and stored in the request logger. Query your Postgres logs to compare response quality, latency, and cost per variant:
+
+```sql
+SELECT
+  metadata->>'ab_variant' AS variant,
+  COUNT(*)                AS requests,
+  AVG(latency_ms)         AS avg_latency,
+  AVG(total_cost_usd)     AS avg_cost
+FROM request_logs
+WHERE created_at > NOW() - INTERVAL '24 hours'
+GROUP BY variant;
+```
+
+---
+
+## 4. Content routing: code questions to DeepSeek, general to GPT-4o-mini
+
+Use `content-based` routing to inspect user messages and route to specialized models without any client-side logic.
+
+```yaml title="config.yaml"
+listeners:
+  - address: 0.0.0.0
+    port: 8080
+
+providers:
+  - name: deepseek
+    type: deepseek
+    api_key: ${DEEPSEEK_API_KEY}
+    models:
+      - deepseek-chat
+
+  - name: openai
+    type: openai
+    api_key: ${OPENAI_API_KEY}
+    models:
+      - gpt-4o-mini
+
+strategy:
+  mode: content-based
+  content_conditions:
+    - type: prompt_regex
+      value: "(?i)(code|function|class|def |import |bug|error|debug|refactor|typescript|python|javascript|rust|golang|sql|html|css|api|endpoint|regex|algorithm|compile)"
+      target_key: deepseek
+
+targets:
+  - virtual_key: openai     # default: non-code requests go here
+  - virtual_key: deepseek
+```
+
+Code question — routed to DeepSeek:
+
+```bash
+curl -s http://localhost:8080/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $API_KEY" \
+  -d '{
+    "model": "gpt-4o-mini",
+    "messages": [
+      {"role": "user", "content": "Write a Python function that implements binary search on a sorted list."}
+    ]
+  }'
+```
+
+General question — routed to GPT-4o-mini (default):
+
+```bash
+curl -s http://localhost:8080/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $API_KEY" \
+  -d '{
+    "model": "gpt-4o-mini",
+    "messages": [
+      {"role": "user", "content": "What are the best practices for remote team management?"}
+    ]
+  }'
+```
+
+Content conditions are evaluated in order. The first match wins. If no condition matches, the request falls through to the first target in the `targets` list (OpenAI in this example). Regex patterns are compiled at startup; an invalid pattern causes a startup error.
+
+---
+
+## 5. Rate-limited free tier: 60 RPM per API key for your SaaS
+
+Expose the gateway as your SaaS AI endpoint. Each customer gets an API key with 60 requests per minute and a $5 spend cap.
+
+```yaml title="config.yaml"
+listeners:
+  - address: 0.0.0.0
+    port: 8080
+
+providers:
+  - name: openai
+    type: openai
+    api_key: ${OPENAI_API_KEY}
+    models:
+      - gpt-4o-mini
+
+strategy:
+  mode: single
+
+targets:
+  - virtual_key: openai
+
+plugins:
+  # Rate limit: 60 requests per minute per API key
+  - name: rate-limit
+    type: ratelimit
+    stage: before_request
+    enabled: true
+    config:
+      key_rpm: 60
+      burst: 10
+
+  # Spend cap: $5 per API key (check before request)
+  - name: budget
+    type: budget
+    stage: before_request
+    enabled: true
+    config:
+      store_id: "free-tier"
+      spend_limit_usd: 5.0
+      input_per_m_tokens: 0.15
+      output_per_m_tokens: 0.60
+      max_keys: 50000
+
+  # Spend cap: record cost after response
+  - name: budget
+    type: budget
+    stage: after_request
+    enabled: true
+    config:
+      store_id: "free-tier"
+      input_per_m_tokens: 0.15
+      output_per_m_tokens: 0.60
+```
+
+Normal request (succeeds):
+
+```bash
+curl -s http://localhost:8080/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer user_free_abc123" \
+  -d '{
+    "model": "gpt-4o-mini",
+    "messages": [
+      {"role": "user", "content": "Hello, how are you?"}
+    ]
+  }'
+```
+
+When the rate limit is exceeded, the gateway returns a `429`:
+
+```json
+{
+  "error": {
+    "message": "Rate limit exceeded: per-key limit (60 rpm)",
+    "type": "rate_limit_error",
+    "code": "rate_limit_exceeded"
+  }
+}
+```
+
+When the spend cap is hit, the gateway returns a `429` with a budget-specific message:
+
+```json
+{
+  "error": {
+    "message": "Budget exceeded: spend limit of $5.00 USD reached for this API key",
+    "type": "budget_error",
+    "code": "budget_exceeded"
+  }
+}
+```
+
+Rate checks execute in order: **global, then per-key, then per-user**. The budget plugin checks cumulative spend before forwarding the request and records the cost after the response.
+
+---
+
+## 6. Agentic pipeline with filesystem MCP + Anthropic
+
+Connect a Model Context Protocol (MCP) tool server to the gateway. The gateway runs the full agentic tool-calling loop so your client receives a final text answer without implementing tool-calling logic.
+
+```yaml title="config.yaml"
+listeners:
+  - address: 0.0.0.0
+    port: 8080
+
+providers:
+  - name: anthropic
+    type: anthropic
+    api_key: ${ANTHROPIC_API_KEY}
+    models:
+      - claude-sonnet-4-20250514
+
+strategy:
+  mode: single
+
+targets:
+  - virtual_key: anthropic
+
+mcp_servers:
+  - name: filesystem
+    url: "http://mcp-filesystem:3001/mcp"
+    timeout_seconds: 15
+    max_call_depth: 5
+    allowed_tools:
+      - read_file
+      - list_directory
+      - search_files
+```
+
+Ask a question that requires reading a file:
+
+```bash
+curl -s http://localhost:8080/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $API_KEY" \
+  -d '{
+    "model": "claude-sonnet-4-20250514",
+    "messages": [
+      {"role": "user", "content": "Read the file /data/config.json and summarize what settings it contains."}
+    ]
+  }'
+```
+
+Behind the scenes the gateway:
+
+1. Injects the available MCP tools (`read_file`, `list_directory`, `search_files`) into the chat completion request.
+2. Receives a `tool_calls` response from Claude requesting `read_file` with path `/data/config.json`.
+3. Executes the tool call against the MCP filesystem server.
+4. Sends the tool result back to Claude.
+5. Returns Claude's final text summary to the client.
+
+The entire agentic loop is transparent. The client sends a standard chat completion request and receives a standard text response.
+
+To run the MCP filesystem server alongside the gateway in Docker Compose:
+
+```yaml title="docker-compose.yml"
+services:
+  gateway:
+    image: ghcr.io/ferrolabs/ferrogw:latest
+    ports:
+      - "8080:8080"
+    environment:
+      GATEWAY_CONFIG: /etc/ferro/config.yaml
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+    volumes:
+      - ./config.yaml:/etc/ferro/config.yaml:ro
+    depends_on:
+      - mcp-filesystem
+
+  mcp-filesystem:
+    image: ghcr.io/modelcontextprotocol/filesystem-server:latest
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./data:/data:ro
+    environment:
+      ALLOWED_PATHS: /data
+```
+
+---
+
+## Related pages
+
+- [Routing policies](/guides/routing-policies)
+- [Plugins](/guides/plugins)
+- [MCP integration](/guides/mcp)
+- [Benchmarks](/benchmarks)
+- [Configuration](/getting-started/configuration)

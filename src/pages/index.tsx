@@ -52,6 +52,13 @@ function IconBolt() {
     </svg>
   );
 }
+function IconSpeed() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+    </svg>
+  );
+}
 function GitHubIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -62,38 +69,38 @@ function GitHubIcon() {
 
 // ── Data ──────────────────────────────────────────────────────────────────────
 const STATS = [
-  { value: '19', label: 'AI Providers' },
+  { value: '29', label: 'AI Providers' },
   { value: '2,500+', label: 'Models' },
   { value: '11', label: 'Plugins' },
-  { value: '6', label: 'Routing Strategies' },
+  { value: '8', label: 'Routing Strategies' },
 ];
 
 const FEATURES = [
   {
     Icon: IconGlobe,
     title: 'Universal Provider Access',
-    desc: 'One API for OpenAI, Anthropic, Gemini, Mistral, Groq, xAI, Azure, AWS Bedrock, Vertex AI, Hugging Face, and 9 more — all from a single endpoint.',
+    desc: 'One API for OpenAI, Anthropic, Gemini, Mistral, Groq, xAI, Azure, AWS Bedrock, Vertex AI, Cerebras, DeepSeek, and 18 more — all from a single endpoint.',
     link: '/guides/providers',
-    linkLabel: 'View all providers →',
+    linkLabel: 'View all 29 providers →',
   },
   {
     Icon: IconRoute,
     title: 'Intelligent Routing',
-    desc: 'Six strategies: single, fallback with exponential backoff, weighted load balancing, conditional routing, least-latency, and cost-optimized.',
+    desc: 'Eight strategies: single, fallback, weighted load balancing, conditional, least-latency, cost-optimized, content-based, and A/B testing.',
     link: '/guides/routing-policies',
     linkLabel: 'Routing strategies →',
   },
   {
     Icon: IconShield,
     title: 'Built-in Safety Plugins',
-    desc: 'PII redaction, secret scanning, prompt shield, word filter, schema guard, regex guard, max-token, response cache, rate limit — 11 plugins total.',
+    desc: '6 OSS plugins (word filter, rate limit, budget, cache, logger, max-token) plus 5 Ferro Labs Managed enterprise plugins (PII redact, secret scan, prompt shield, schema guard, regex guard).',
     link: '/guides/plugins',
     linkLabel: 'Plugin catalogue →',
   },
   {
     Icon: IconPlug,
     title: 'MCP Integration',
-    desc: 'First-class Model Context Protocol support. Connect filesystem, database, and custom tool servers to any model via an agentic loop.',
+    desc: 'First-class Model Context Protocol support with streaming. Connect filesystem, database, and custom tool servers to any model via an agentic loop.',
     link: '/guides/mcp',
     linkLabel: 'MCP guide →',
   },
@@ -111,6 +118,13 @@ const FEATURES = [
     link: '/getting-started/quickstart',
     linkLabel: 'Quickstart →',
   },
+  {
+    Icon: IconSpeed,
+    title: 'Published Benchmarks',
+    desc: '<1ms p99 overhead at 500 RPS. 100% success rate sustained. ~120MB memory. Go-native with zero runtime dependencies.',
+    link: '/benchmarks',
+    linkLabel: 'See benchmarks →',
+  },
 ];
 
 const PROVIDERS = [
@@ -118,6 +132,8 @@ const PROVIDERS = [
   'DeepSeek', 'Together AI', 'Perplexity', 'Fireworks AI', 'AI21',
   'Azure OpenAI', 'Azure Foundry', 'Ollama', 'AWS Bedrock',
   'Replicate', 'Vertex AI', 'Hugging Face', 'xAI Grok',
+  'Cerebras', 'NVIDIA NIM', 'Cloudflare Workers AI', 'Databricks',
+  'Novita AI', 'Qwen', 'Moonshot AI', 'SambaNova', 'DeepInfra', 'OpenRouter',
 ];
 
 // ── Code Tab Content ──────────────────────────────────────────────────────────
@@ -232,21 +248,22 @@ export default function Home(): React.ReactElement {
   return (
     <Layout
       title="Ferro Labs AI Gateway — Docs"
-      description="Open-source AI gateway for 19 providers, 2500+ models. Drop-in OpenAI-compatible proxy with routing, plugins, MCP, and full observability.">
+      description="Open-source AI gateway built in Go for 29 providers, 2500+ models. Drop-in OpenAI-compatible proxy with 8 routing strategies, 11 plugins, MCP, and sub-millisecond overhead.">
 
       {/* ── Hero ──────────────────────────────────────────────── */}
       <div className={styles.hero}>
         <div className={styles.heroContent}>
           <div className={styles.heroBadge}>
-            <span>⚙</span> Open Source · Apache 2.0 · v0.8.0
+            <span>⚙</span> Open Source · Apache 2.0 · v1.0.0
           </div>
           <h1 className={styles.heroTitle}>
             One Gateway for<br />
             <span className={styles.heroAccent}>Every AI Model</span>
           </h1>
           <p className={styles.heroSubtitle}>
-            A high-performance, OpenAI-compatible proxy for 19 providers and 2,500+ models.
-            Sub-millisecond routing, 11 built-in safety plugins, circuit breakers, and
+            A high-performance, OpenAI-compatible proxy for 29 providers and 2,500+ models —
+            built in Go for sub-millisecond overhead.
+            8 routing strategies, 11 safety plugins, circuit breakers, and
             first-class MCP integration — self-hosted and production-ready.
           </p>
           <div className={styles.heroButtons}>
@@ -287,7 +304,8 @@ export default function Home(): React.ReactElement {
           <div className={styles.sectionEyebrow}>Capabilities</div>
           <h2 className={styles.sectionHeading}>Everything the production gateway needs</h2>
           <p className={styles.sectionDesc}>
-            Built in Go for low latency and high concurrency. Designed to be deployed
+            Built in Go for low latency and high concurrency. &lt;1ms p99 overhead at 500 RPS in{' '}
+            <Link to="/benchmarks">published benchmarks</Link>. Designed to be deployed
             in front of your LLM traffic without changing your existing client code.
           </p>
           <div className={styles.featureGrid}>
@@ -306,7 +324,7 @@ export default function Home(): React.ReactElement {
       {/* ── Providers ─────────────────────────────────────────── */}
       <div className={styles.providersSection}>
         <div className={styles.sectionEyebrow} style={{ marginBottom: '0.6rem' }}>Provider Support</div>
-        <h2 className={styles.sectionHeading}>19 providers out of the box</h2>
+        <h2 className={styles.sectionHeading}>29 providers out of the box</h2>
         <p className={styles.sectionDesc}>
           Credentials are registered via environment variables. Enable any provider in
           seconds — no code changes, no rebuilds.
@@ -315,6 +333,38 @@ export default function Home(): React.ReactElement {
           {PROVIDERS.map(p => (
             <span key={p} className={styles.providerBadge}>{p}</span>
           ))}
+        </div>
+      </div>
+
+      {/* ── Ferro Labs Managed ─────────────────────────────────────────── */}
+      <div className={styles.section}>
+        <div className={styles.sectionInner}>
+          <div className={styles.sectionEyebrow}>Managed Platform</div>
+          <h2 className={styles.sectionHeading}>Need multi-tenant, managed, and fully hosted?</h2>
+          <p className={styles.sectionDesc}>
+            Ferro Labs Managed wraps the open-source gateway engine with everything teams need to ship AI products.
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxWidth: '600px', margin: '1.5rem auto 0' }}>
+            <div>✅ <strong>Isolated per-tenant gateway instances</strong> — each customer gets their own gateway with separate keys, limits, and logging</div>
+            <div>✅ <strong>Dashboard + billing + analytics</strong> — usage tracking, cost attribution, Stripe integration, and team management</div>
+            <div>✅ <strong>SSO + audit logs + enterprise plugins</strong> — SAML, PII redaction, prompt shield, secret scanning, and schema validation</div>
+          </div>
+          <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
+            <a
+              href="https://www.ferrolabs.ai/"
+              style={{
+                display: 'inline-block',
+                padding: '0.7rem 1.5rem',
+                background: '#059669',
+                color: '#fff',
+                borderRadius: '0.5rem',
+                fontWeight: 600,
+                textDecoration: 'none',
+              }}
+            >
+              Join Ferro Labs Managed Waitlist →
+            </a>
+          </div>
         </div>
       </div>
 
@@ -337,6 +387,7 @@ export default function Home(): React.ReactElement {
               <Link className={styles.qsLink} to="/guides/routing-policies">→ Routing strategies</Link>
               <Link className={styles.qsLink} to="/guides/plugins">→ Plugin catalogue</Link>
               <Link className={styles.qsLink} to="/guides/mcp">→ MCP integration</Link>
+              <Link className={styles.qsLink} to="/benchmarks">→ Benchmarks</Link>
             </div>
           </div>
 

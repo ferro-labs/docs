@@ -23,6 +23,18 @@ const NAV_ITEMS = [
     exact: false,
   },
   {
+    label: 'Benchmarks',
+    href: '/benchmarks',
+    prefixes: ['/benchmarks'],
+    exact: true,
+  },
+  {
+    label: 'Ferro Labs Managed',
+    href: '/ferrocloud/overview',
+    prefixes: ['/ferrocloud'],
+    exact: false,
+  },
+  {
     label: 'Operations',
     href: '/operations/monitoring',
     prefixes: ['/operations'],

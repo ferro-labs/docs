@@ -1,7 +1,7 @@
 ---
 title: Concepts
-description: Core concepts of the Ferro Labs AI Gateway — OpenAI-compatible routing, plugin pipeline, observability, MCP tool-calling, and the difference between routes, targets, and strategies.
-keywords: [AI gateway concepts, LLM routing strategies, AI plugins, MCP tool calling, OpenAI wire format, gateway routing]
+description: "Core concepts of the Ferro Labs AI Gateway — OpenAI-compatible routing across 29 providers, 8 strategies, plugin pipeline, MCP tool-calling, and the difference between routes, targets, and strategies."
+keywords: [AI gateway concepts, LLM routing strategies, AI plugins, MCP tool calling, OpenAI wire format, gateway routing, content-based routing, ab-test routing]
 ---
 
 ## OpenAI-compatible API
@@ -20,12 +20,14 @@ The strategy controls which provider target receives each request. Configure it 
 | `conditional` | Evaluate rules (model name, model prefix) to pick a target per request. |
 | `least-latency` | Route to the target with the lowest P50 latency, using a rolling tracker. |
 | `cost-optimized` | Estimate input cost from the model catalog and route to the cheapest compatible target. |
+| `content-based` | Route based on prompt content using substring match or regex. First rule match wins. |
+| `ab-test` | Split traffic across labeled variants by weight for comparison testing. |
 
 See [Routing policies](/guides/routing-policies) for YAML examples of each strategy.
 
 ## Providers and targets
 
-A **provider** is a registered AI API backend (e.g., OpenAI, Anthropic). Providers are enabled by setting environment variables — no code needed.
+A **provider** is a registered AI API backend (e.g., OpenAI, Anthropic). The gateway supports [29 providers](/guides/providers). Providers are enabled by setting environment variables — no code needed.
 
 A **target** is a reference to a provider in your config. Targets carry optional fields: `weight` (for load balancing), `retry` (attempts + status codes), and `circuit_breaker` (thresholds + timeout).
 
@@ -37,21 +39,34 @@ Aliases map short names to full model IDs. They are resolved before routing, so 
 
 Plugins run at three lifecycle stages: `before_request`, `after_request`, and `on_error`.
 
-Plugin types and the 11 built-in implementations:
+### OSS plugins
 
-| Plugin | Type | Stage | Purpose |
-|---|---|---|---|
-| `word-filter` | guardrail | before_request | Block requests containing banned words |
-| `max-token` | guardrail | before_request | Enforce token and message count limits |
-| `pii-redact` | guardrail | before_request | Detect and redact PII entities |
-| `secret-scan` | guardrail | before_request | Block requests containing secrets/credentials |
-| `prompt-shield` | guardrail | before_request | Score and block prompt injection attempts |
-| `schema-guard` | guardrail | after_request | Validate model output against a JSON Schema |
-| `regex-guard` | guardrail | before_request | Block requests matching regex patterns |
-| `response-cache` | transform | before_request | Cache exact-match responses in memory |
-| `request-logger` | logging | before_request | Emit structured logs, optionally persist to SQLite/Postgres |
-| `rate-limit` | ratelimit | before_request | Token-bucket rate limiting per request |
-| `max-token` | guardrail | before_request | Enforce input and output token limits |
+These 6 plugins ship with the open-source gateway:
+
+| Plugin | Stage | Purpose |
+|---|---|---|
+| `word-filter` | before_request | Block requests containing banned words |
+| `max-token` | before_request | Enforce token and message count limits |
+| `response-cache` | before_request | Cache exact-match responses in memory |
+| `request-logger` | before_request | Emit structured logs, optionally persist to SQLite/Postgres |
+| `rate-limit` | before_request | Token-bucket rate limiting (global, per-key, per-user) |
+| `budget` | before_request + after_request | Track and enforce per-key spend limits |
+
+### Ferro Labs Managed plugins
+
+These 5 plugins require [Ferro Labs Managed](https://www.ferrolabs.ai/) because they depend on ML inference services that run server-side:
+
+| Plugin | Stage | Purpose |
+|---|---|---|
+| `pii-redact` | before_request | Detect and redact PII entities using NER models |
+| `secret-scan` | before_request | Block requests containing leaked API keys or credentials |
+| `prompt-shield` | before_request | Score and block prompt injection attempts |
+| `schema-guard` | after_request | Validate model JSON output against a JSON Schema |
+| `regex-guard` | before_request | Block requests matching configurable regex patterns |
+
+:::note Ferro Labs Managed feature
+The 5 enterprise plugins require a Ferro Labs Managed account. [Join the waitlist →](https://www.ferrolabs.ai/)
+:::
 
 See [Plugins](/guides/plugins) for full configuration examples.
 
@@ -59,7 +74,13 @@ See [Plugins](/guides/plugins) for full configuration examples.
 
 Model Context Protocol (MCP) lets you connect external tool servers to the gateway. When `mcp_servers` are configured, the gateway injects available tools into every chat completion request and runs an agentic loop when the model returns `tool_calls`. This works transparently — clients receive the final text response without needing to implement the tool loop themselves.
 
+MCP Phase 1 (tool injection + agentic loop) shipped in v0.8.0. Streaming support for MCP requests was added in v1.0.0.
+
 See [MCP integration](/guides/mcp) for setup and examples.
+
+## Ferro Labs Managed
+
+[Ferro Labs Managed](/ferrocloud/overview) is the managed, multi-tenant version of the AI Gateway hosted by Ferro Labs. It wraps the same OSS engine with per-tenant isolation, a management dashboard, durable billing, [semantic caching](/ferrocloud/semantic-cache), SSO/SAML, audit logs, and the 5 enterprise security plugins listed above. See [OSS vs Ferro Labs Managed](/guides/oss-vs-ferrocloud) for a full comparison.
 
 ## Observability
 

@@ -36,6 +36,7 @@ const sidebars: SidebarsConfig = {
           collapsed: false,
           items: [
             'guides/routing-policies',
+            'guides/use-cases',
           ],
         },
         {
@@ -79,9 +80,12 @@ const sidebars: SidebarsConfig = {
         {
           type: 'category',
           label: 'Deployment',
-          collapsed: true,
+          collapsed: false,
           items: [
             'guides/kubernetes',
+            'guides/deployment/docker-compose',
+            'guides/deployment/fly-io',
+            'guides/deployment/railway',
           ],
         },
         {
@@ -89,9 +93,28 @@ const sidebars: SidebarsConfig = {
           label: 'Compare',
           collapsed: true,
           items: [
+            'guides/why-ferro',
             'guides/oss-vs-ferrocloud',
           ],
         },
+        'guides/go-sdk',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Performance',
+      collapsed: false,
+      items: [
+        'benchmarks',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'Ferro Labs Managed',
+      collapsed: false,
+      items: [
+        'ferrocloud/overview',
+        'ferrocloud/semantic-cache',
       ],
     },
     {
@@ -121,6 +144,16 @@ const sidebars: SidebarsConfig = {
       collapsed: false,
       items: ['security/data-handling'],
     },
+    {
+      type: 'category',
+      label: 'Support',
+      collapsed: false,
+      items: [
+        'guides/troubleshooting',
+        'faq/index',
+      ],
+    },
+    'enterprise',
     'changelog',
   ],
 };

@@ -21,7 +21,7 @@ This affects sign-in routing only. It does not grant access by itself. Team memb
 3. In `Login domains`, enter the work email domain you want to claim.
 4. Save the domain.
 
-FerroCloud will create a pending verification record and show you the DNS TXT record that must be added before the domain becomes active.
+Ferro Labs Managed will create a pending verification record and show you the DNS TXT record that must be added before the domain becomes active.
 
 ## Add the DNS TXT record
 
@@ -40,7 +40,7 @@ Host: _ferrocloud-challenge.example.com
 Value: ferrocloud-verification-token
 ```
 
-FerroCloud checks the TXT record on `_ferrocloud-challenge.<domain>`. It also accepts the same token on the root domain if your DNS provider has limited host support.
+Ferro Labs Managed checks the TXT record on `_ferrocloud-challenge.<domain>`. It also accepts the same token on the root domain if your DNS provider has limited host support.
 
 ## Verify the domain
 
@@ -55,7 +55,7 @@ When verification succeeds, the domain is marked as verified and email-first sig
 Once a domain is verified:
 
 - A user enters their work email on the public sign-in page.
-- FerroCloud resolves the domain to the workspace.
+- Ferro Labs Managed resolves the domain to the workspace.
 - The user is routed to password, OIDC, or SAML sign-in based on the workspace configuration.
 
 ## Troubleshooting

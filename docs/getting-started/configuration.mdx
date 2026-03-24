@@ -1,8 +1,12 @@
 ---
 title: Configuration
-description: Complete configuration reference for the Ferro Labs AI Gateway — routes, targets, model aliases, plugins, MCP servers, and environment variable overrides in config.yaml.
-keywords: [AI gateway configuration, config.yaml, LLM routing config, model aliases, YAML configuration, gateway config reference]
+description: "Complete v1.0.0 configuration reference for the Ferro Labs AI Gateway — routes, targets, 8 routing strategies, model aliases, all 11 plugins, MCP servers, and budget controls."
+keywords: [AI gateway configuration, config.yaml, LLM routing config, model aliases, YAML configuration, gateway config reference, content-based routing config, ab-test config]
 ---
+
+:::info v1.0.0 reference
+This configuration reference covers Ferro Labs AI Gateway v1.0.0 — the first stable release with semver guarantees. All configuration keys documented here are part of the stable API.
+:::
 
 The gateway loads configuration from a YAML or JSON file at the path set by `GATEWAY_CONFIG`.
 
@@ -19,7 +23,7 @@ The top-level `strategy` block controls how requests are routed.
 
 ```yaml
 strategy:
-  mode: fallback  # single | fallback | loadbalance | conditional | least-latency | cost-optimized
+  mode: fallback  # single | fallback | loadbalance | conditional | least-latency | cost-optimized | content-based | ab-test
 ```
 
 | Mode | Description |
@@ -30,6 +34,8 @@ strategy:
 | `conditional` | Rule-based: match model name or model prefix to a target. |
 | `least-latency` | Route to the target with the lowest P50 latency (rolling tracker). |
 | `cost-optimized` | Use the built-in model catalog to estimate prompt cost and pick the cheapest compatible target. |
+| `content-based` | Route based on user message content using substring or regex matching. |
+| `ab-test` | Split traffic across labeled variants by weight for comparison testing. |
 
 ### Conditional rules
 
@@ -49,6 +55,41 @@ strategy:
 ```
 
 Rules are evaluated in order. `model` matches the exact model ID; `model_prefix` matches any model whose name starts with the given string.
+
+### Content-based routing
+
+```yaml
+strategy:
+  mode: content-based
+  content_conditions:
+    - type: prompt_contains
+      value: "translate"
+      target_key: deepl-provider
+    - type: prompt_regex
+      value: "(?i)(code|function|class|def |import )"
+      target_key: openai
+    - type: prompt_contains
+      value: "summarize"
+      target_key: anthropic
+```
+
+Three condition types: `prompt_contains` (case-insensitive substring), `prompt_not_contains`, and `prompt_regex` (Go regexp). Regex patterns are compiled at startup — invalid patterns cause a startup error. First match wins; unmatched requests fall to the first target.
+
+### A/B test routing
+
+```yaml
+strategy:
+  mode: ab-test
+  ab_variants:
+    - target_key: openai
+      weight: 80
+      label: control
+    - target_key: anthropic
+      weight: 20
+      label: challenger
+```
+
+Weights are relative. Each request is tagged with the `label` field in structured logs (the `ab_variant` field in `gateway.request.completed` events), so you can aggregate quality or cost metrics per variant.
 
 ## Targets
 
@@ -90,6 +131,8 @@ A client that requests `model: cheap` will receive a response from Gemini 1.5 Fl
 
 Each plugin entry specifies its `name`, `type`, `stage`, and `config` map. Set `enabled: false` to disable without removing the entry.
 
+### OSS plugins
+
 ```yaml
 plugins:
   - name: word-filter
@@ -116,6 +159,59 @@ plugins:
       max_age: 300
       max_entries: 1000
 
+  - name: request-logger
+    type: logging
+    stage: before_request
+    enabled: true
+    config:
+      level: info
+      persist: true
+      backend: sqlite
+      dsn: ferrogw-requests.db
+
+  - name: rate-limit
+    type: ratelimit
+    stage: before_request
+    enabled: true
+    config:
+      requests_per_minute: 120
+      burst: 20
+      key_rpm: 60          # per API key limit (v0.8.5+)
+      user_rpm: 30         # per user ID limit (v0.8.5+)
+
+  - name: budget
+    type: guardrail
+    stage: before_request   # also register at after_request to record costs
+    enabled: true
+    config:
+      spend_limit_usd: 10.00
+      store_id: default     # instances sharing store_id share spend data
+```
+
+:::tip Budget plugin dual registration
+The `budget` plugin should be registered twice — once at `before_request` (to reject over-limit keys) and once at `after_request` (to record token costs). Use the same `store_id` in both entries to share the spend counter.
+```yaml
+plugins:
+  - name: budget
+    stage: before_request
+    enabled: true
+    config:
+      spend_limit_usd: 10.00
+      store_id: default
+  - name: budget
+    stage: after_request
+    enabled: true
+    config:
+      store_id: default
+```
+:::
+
+### Ferro Labs Managed plugins
+
+These plugins require a [Ferro Labs Managed](https://www.ferrolabs.ai/) account:
+
+```yaml
+plugins:
   - name: pii-redact
     type: guardrail
     stage: before_request
@@ -124,6 +220,13 @@ plugins:
       action: redact       # redact | block
       redact_mode: replace_type
       apply_to: input
+
+  - name: secret-scan
+    type: guardrail
+    stage: before_request
+    enabled: true
+    config:
+      action: block
 
   - name: prompt-shield
     type: guardrail
@@ -152,13 +255,27 @@ plugins:
             type: number
             minimum: 0
             maximum: 1
+
+  - name: regex-guard
+    type: guardrail
+    stage: before_request
+    enabled: true
+    config:
+      action: block
+      patterns:
+        - "(?i)drop\\s+table"
+        - "(?i)delete\\s+from"
 ```
+
+:::note Ferro Labs Managed feature
+The 5 enterprise plugins (pii-redact, secret-scan, prompt-shield, schema-guard, regex-guard) require a Ferro Labs Managed account. [Join the waitlist →](https://www.ferrolabs.ai/)
+:::
 
 See [Plugins](/guides/plugins) for all 11 plugins and their full config options.
 
 ## MCP servers
 
-Configure Model Context Protocol tool servers for agentic tool-calling.
+Configure Model Context Protocol tool servers for agentic tool-calling. Streaming requests are supported as of v1.0.0.
 
 ```yaml
 mcp_servers:
@@ -182,8 +299,11 @@ When `mcp_servers` is present, the gateway initialises MCP connections in the ba
 
 ## Complete example
 
-Copy [`config.example.yaml`](https://github.com/ferro-labs/ai-gateway/blob/main/config.example.yaml) from the repository for a full example covering all 19 providers, aliases, and all 11 plugins.
+Copy [`config.example.yaml`](https://github.com/ferro-labs/ai-gateway/blob/main/config.example.yaml) from the repository for a full example covering all 29 providers, aliases, and all 11 plugins.
 
-## Aliases
+## Related pages
 
-Aliases map friendly names to concrete model IDs. Aliases cannot point to other aliases.
+- [Routing policies](/guides/routing-policies) — all 8 strategies with examples
+- [Plugins](/guides/plugins) — detailed plugin documentation
+- [Use cases](/guides/use-cases) — recipe-style configurations
+- [MCP integration](/guides/mcp) — tool server setup

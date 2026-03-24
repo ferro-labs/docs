@@ -1,7 +1,7 @@
 ---
 title: Introduction
-description: Ferro Labs AI Gateway is an open-source LLM proxy with an OpenAI-compatible API. Route traffic across 19 AI providers, 2,500+ models, 11 safety plugins, and MCP tool-calling — no client code changes needed.
-keywords: [AI gateway, LLM proxy, OpenAI compatible, open source AI, LLM routing, multi-provider AI, self-hosted AI gateway, AI middleware, LangChain proxy, AI reverse proxy]
+description: "Ferro Labs AI Gateway is an open-source Go LLM proxy that routes traffic across 29 AI providers and 2,500+ models with sub-millisecond overhead. Drop-in OpenAI-compatible API with 8 routing strategies, 11 plugins, and MCP tool-calling."
+keywords: [AI gateway, open source AI gateway, LLM proxy, OpenAI compatible, Go LLM proxy, self-hosted LLM gateway, AI middleware, multi-provider AI, LLM routing, AI gateway v1.0.0]
 ---
 
 import Tabs from '@theme/Tabs';
@@ -9,7 +9,13 @@ import TabItem from '@theme/TabItem';
 
 # Ferro Labs AI Gateway
 
-**Ferro Labs AI Gateway** is an open-source, high-performance control plane for AI traffic. It exposes a single OpenAI-compatible API that routes requests across 19 providers and 2,500+ models, enforces safety policies with 11 built-in plugins, and emits full production observability — all without changing your existing client code.
+You're calling OpenAI directly. When they go down, your product goes down. When they raise prices, you scramble. When you need to test a new model, you rewrite integration code. When you want observability, you build it yourself.
+
+**Ferro Labs AI Gateway** is a single Go binary that sits in front of all your LLM traffic. It exposes an OpenAI-compatible API, routes requests across 29 providers and 2,500+ models, enforces safety policies with 11 plugins, and emits production observability — without changing your existing client code.
+
+:::tip Ferro Labs Managed — Managed AI Gateway
+Ferro Labs Managed wraps the open-source gateway with multi-tenancy, a dashboard, durable billing, semantic caching, and 5 enterprise security plugins. [Join the early access waitlist →](https://www.ferrolabs.ai/)
+:::
 
 :::tip Ready to jump in?
 [Quickstart — up and running in 30 seconds →](/getting-started/quickstart)
@@ -20,9 +26,12 @@ import TabItem from '@theme/TabItem';
 Drop the gateway in front of your LLM traffic. Set `base_url` to the gateway endpoint. That's it — your OpenAI SDK, LangChain, LlamaIndex, or curl commands continue to work unchanged.
 
 ```bash
+export OPENAI_API_KEY=sk-...
+export ANTHROPIC_API_KEY=sk-ant-...
+
 docker run -d -p 8080:8080 \
-  -e OPENAI_API_KEY=sk-... \
-  -e ANTHROPIC_API_KEY=sk-ant-... \
+  -e OPENAI_API_KEY \
+  -e ANTHROPIC_API_KEY \
   ghcr.io/ferro-labs/ai-gateway:latest
 ```
 
@@ -32,13 +41,18 @@ Then send requests to `http://localhost:8080/v1/chat/completions` exactly as you
 
 | Capability | Details |
 |---|---|
-| **19 AI providers** | OpenAI, Anthropic, Gemini, Mistral, Groq, Cohere, DeepSeek, Together, Perplexity, Fireworks, AI21, Azure OpenAI, Azure Foundry, xAI, Ollama, Replicate, AWS Bedrock, Vertex AI, Hugging Face |
-| **6 routing strategies** | Single, Fallback, Weighted, Conditional, Least-Latency, Cost-Optimized |
-| **11 built-in plugins** | Word filter, max-token, response cache, request logger, rate limit, PII redact, secret scan, prompt shield, schema guard, regex guard |
-| **MCP integration** | Agentic tool-calling loop via Model Context Protocol servers (v0.8.0+) |
+| **29 AI providers** | OpenAI, Anthropic, Gemini, Mistral, Groq, Cohere, DeepSeek, Together, Perplexity, Fireworks, AI21, Azure OpenAI, Azure Foundry, xAI, Ollama, Replicate, AWS Bedrock, Vertex AI, Hugging Face, Cerebras, NVIDIA NIM, Cloudflare Workers AI, Databricks, Novita AI, Qwen, Moonshot AI, SambaNova, DeepInfra, OpenRouter |
+| **8 routing strategies** | Single, Fallback, Weighted, Conditional, Least-Latency, Cost-Optimized, Content-Based, A/B Test |
+| **6 OSS + 5 Ferro Labs Managed plugins** | Word filter, max-token, response cache, request logger, rate limit, budget (OSS) — plus PII redact, secret scan, prompt shield, schema guard, regex guard ([Ferro Labs Managed](https://www.ferrolabs.ai/)) |
+| **MCP integration** | Agentic tool-calling loop via Model Context Protocol servers with streaming support (v1.0.0) |
 | **Observability** | Prometheus metrics, structured JSON logs with trace IDs, deep `/health` per provider |
 | **Resiliency** | Per-target circuit breakers, retry with exponential backoff, per-status-code retry config |
 | **OpenAI compatible** | Chat completions, embeddings, images, and model listing — same wire format |
+| **Built in Go** | Single binary, zero runtime dependencies, sub-millisecond p99 overhead at 500 RPS. [See benchmarks →](/benchmarks) |
+
+:::info Why Go?
+Go's goroutine scheduler, low-GC overhead, and lack of a GIL make it ideal for a latency-sensitive proxy. The gateway ships as a single static binary under 20MB with zero runtime dependencies. [Published benchmarks](/benchmarks) show sub-millisecond p99 overhead at 500 RPS — while Python-based gateways degrade beyond 200 RPS.
+:::
 
 ## Docs map
 
@@ -51,15 +65,26 @@ Then send requests to `http://localhost:8080/v1/chat/completions` exactly as you
 - [Configuration](/getting-started/configuration) — Full config reference
 
 ### Guides
-- [Providers](/guides/providers) — Provider table and supported capabilities
+- [Providers](/guides/providers) — All 29 providers and supported capabilities
 - [Provider configuration](/guides/providers-config) — Environment variables per provider
 - [Authentication](/guides/auth) — API key configuration
-- [Routing policies](/guides/routing-policies) — All 6 routing strategies with examples
+- [Routing policies](/guides/routing-policies) — All 8 routing strategies with examples
 - [Plugins](/guides/plugins) — All 11 plugins with YAML config
 - [MCP integration](/guides/mcp) — Model Context Protocol tool servers
 - [Observability](/guides/observability) — Metrics, logs, health checks
 - [Rate limiting](/guides/rate-limiting) — IP-level and request-level limiting
 - [Admin auth](/guides/admin-auth) — Admin API scopes and tokens
+- [Use cases](/guides/use-cases) — Recipe-style configurations for common scenarios
+- [Why Ferro Labs](/guides/why-ferro) — Comparison with LiteLLM, Portkey, and other gateways
+
+### Performance
+- [Benchmarks](/benchmarks) — Published Go vs Python gateway performance data
+
+### Deployment
+- [Docker Compose](/guides/deployment/docker-compose) — Production-like deployment
+- [Kubernetes](/guides/kubernetes) — Helm chart and manifests
+- [Fly.io](/guides/deployment/fly-io) — Deploy to Fly.io
+- [Railway](/guides/deployment/railway) — One-click Railway deploy
 
 ### Operations & reference
 - [Monitoring](/operations/monitoring) — Prometheus queries, alerting, dashboards
@@ -67,4 +92,24 @@ Then send requests to `http://localhost:8080/v1/chat/completions` exactly as you
 - [Server settings](/operations/server-settings) — All environment variables
 - [API reference](/api-reference/overview) — Endpoints, request format, admin API
 - [Security](/security/data-handling) — Data handling and least-privilege configuration
+- [Troubleshooting](/guides/troubleshooting) — Common issues and fixes
 - [FAQ](/faq) — Common questions
+
+### Ferro Labs Managed (Managed)
+- [Ferro Labs Managed overview](/ferrocloud/overview) — Managed multi-tenant AI gateway
+- [Semantic caching](/ferrocloud/semantic-cache) — pgvector-based semantic response cache
+- [OSS vs Ferro Labs Managed](/guides/oss-vs-ferrocloud) — Feature comparison
+
+<script type="application/ld+json">
+{JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Ferro Labs AI Gateway",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "Linux, macOS, Windows",
+  "softwareVersion": "1.0.0",
+  "license": "https://opensource.org/licenses/Apache-2.0",
+  "url": "https://github.com/ferro-labs/ai-gateway",
+  "description": "Open-source, high-performance AI gateway built in Go. Routes traffic across 29 LLM providers with sub-millisecond overhead."
+})}
+</script>

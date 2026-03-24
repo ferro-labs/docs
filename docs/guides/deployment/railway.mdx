@@ -1,0 +1,230 @@
+---
+title: Deploy to Railway
+description: "One-click Railway deployment for the Ferro Labs AI Gateway. Set environment variables and start routing AI traffic in minutes."
+keywords:
+  - Railway AI gateway
+  - deploy LLM proxy Railway
+  - one-click AI gateway
+  - Railway LLM gateway
+---
+
+# Deploy to Railway
+
+Railway turns a Git repo or Docker image into a running service with zero infrastructure config. It is the fastest path from "I have API keys" to "my gateway is live."
+
+## One-click deploy
+
+Click the button below to deploy the Ferro Labs AI Gateway to Railway instantly:
+
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/template/ferro-ai-gateway)
+
+This template provisions the gateway service and prompts you for the required environment variables. Once you fill them in, Railway builds and deploys automatically.
+
+:::tip
+If the one-click template is not yet available, follow the manual setup below. The result is identical.
+:::
+
+## Manual setup
+
+### Step 1: Install the Railway CLI
+
+```bash
+npm install -g @railway/cli
+```
+
+Or on macOS:
+
+```bash
+brew install railway
+```
+
+Authenticate:
+
+```bash
+railway login
+```
+
+### Step 2: Create the project
+
+```bash
+mkdir ferro-gateway-railway && cd ferro-gateway-railway
+railway init
+```
+
+When prompted, give the project a name like `ferro-ai-gateway`.
+
+### Step 3: Add project files
+
+Create a `Dockerfile`:
+
+```dockerfile title="Dockerfile"
+FROM ghcr.io/ferro-labs/ai-gateway:latest
+COPY config.yaml /etc/ferro/config.yaml
+```
+
+Create the gateway configuration:
+
+```yaml title="config.yaml"
+listeners:
+  - address: 0.0.0.0
+    port: 8080
+
+providers:
+  - name: openai
+    type: openai
+    api_key: ${OPENAI_API_KEY}
+    models:
+      - gpt-4o
+      - gpt-4o-mini
+
+  - name: anthropic
+    type: anthropic
+    api_key: ${ANTHROPIC_API_KEY}
+    models:
+      - claude-sonnet-4-20250514
+      - claude-haiku-4-20250414
+
+plugins:
+  - name: rate-limit
+    type: rate-limit
+    requests_per_minute: 60
+    burst: 10
+
+routes:
+  - path: /v1/chat/completions
+    provider: openai
+    model: gpt-4o
+    plugins:
+      - rate-limit
+
+  - path: /v1/messages
+    provider: anthropic
+    model: claude-sonnet-4-20250514
+    plugins:
+      - rate-limit
+```
+
+### Step 4: Set environment variables
+
+Open the Railway dashboard for your project, or use the CLI:
+
+```bash
+railway variables set OPENAI_API_KEY=sk-proj-your-openai-key-here
+railway variables set ANTHROPIC_API_KEY=sk-ant-your-anthropic-key-here
+railway variables set CONFIG_PATH=/etc/ferro/config.yaml
+railway variables set PORT=8080
+```
+
+:::warning
+Never hardcode API keys in your `config.yaml` or `Dockerfile`. Always use environment variables through the Railway dashboard or CLI so they remain encrypted.
+:::
+
+### Step 5: Link and deploy
+
+Link your local directory to the Railway project:
+
+```bash
+railway link
+```
+
+Deploy:
+
+```bash
+railway up
+```
+
+Railway detects the `Dockerfile`, builds the image, and starts the service. You will see a deployment URL in the output.
+
+## Adding PostgreSQL for request logging
+
+Railway makes it easy to add a managed Postgres instance for the request-logger plugin.
+
+### Step 1: Add the PostgreSQL plugin
+
+Open your project in the [Railway dashboard](https://railway.com/dashboard) and click **New** then **Database** then **PostgreSQL**. Railway provisions the database and exposes a `DATABASE_URL` variable automatically.
+
+### Step 2: Link the database to the gateway service
+
+In the Railway dashboard, go to your gateway service's **Variables** tab. Add a reference variable:
+
+| Variable name     | Value                 |
+|-------------------|-----------------------|
+| `DATABASE_URL`    | `${{Postgres.DATABASE_URL}}` |
+
+### Step 3: Update your config
+
+Add the request-logger plugin to `config.yaml`:
+
+```yaml title="config.yaml (add to plugins section)"
+plugins:
+  - name: request-logger
+    type: postgres-logger
+    connection_string: ${DATABASE_URL}
+    log_request_body: true
+    log_response_body: false
+
+  - name: rate-limit
+    type: rate-limit
+    requests_per_minute: 60
+    burst: 10
+```
+
+Then add `request-logger` to each route's `plugins` list:
+
+```yaml title="config.yaml (updated routes)"
+routes:
+  - path: /v1/chat/completions
+    provider: openai
+    model: gpt-4o
+    plugins:
+      - request-logger
+      - rate-limit
+
+  - path: /v1/messages
+    provider: anthropic
+    model: claude-sonnet-4-20250514
+    plugins:
+      - request-logger
+      - rate-limit
+```
+
+Redeploy to pick up the changes:
+
+```bash
+railway up
+```
+
+## Verify the deployment
+
+Once the deployment finishes, Railway assigns a public URL. Test it:
+
+```bash
+curl https://ferro-ai-gateway-production.up.railway.app/health
+```
+
+Expected response:
+
+```json
+{"status":"healthy"}
+```
+
+Send a test request:
+
+```bash
+curl https://ferro-ai-gateway-production.up.railway.app/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gpt-4o",
+    "messages": [{"role": "user", "content": "Hello from Railway!"}]
+  }'
+```
+
+:::tip
+Your actual Railway URL will differ. Find it in the Railway dashboard under your service's **Settings** tab, or in the output of `railway up`.
+:::
+
+## Related pages
+
+- [Deploy with Docker Compose](/guides/deployment/docker-compose) — Full local stack with Postgres, Redis, and Prometheus.
+- [Deploy to Fly.io](/guides/deployment/fly-io) — Lightweight cloud deployment on Fly.io.
+- [Quickstart](/getting-started/quickstart) — Get running with a single binary in 60 seconds.

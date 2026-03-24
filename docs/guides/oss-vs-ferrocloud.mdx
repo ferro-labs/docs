@@ -1,48 +1,59 @@
 ---
-title: OSS vs FerroCloud
-description: Side-by-side comparison of the Ferro Labs AI Gateway open-source edition and FerroCloud managed service — features, limits, security plugins, and deployment options.
-keywords: [Ferro Gateway OSS vs Cloud, FerroCloud comparison, AI gateway self-hosted vs managed, open-source LLM proxy comparison]
+title: OSS vs Ferro Labs Managed
+description: "Side-by-side comparison of Ferro Labs AI Gateway open-source and Ferro Labs Managed managed service — features, plugins, plans, pricing, and when to upgrade from self-hosted to managed."
+keywords: [Ferro Gateway OSS vs Cloud, Ferro Labs Managed comparison, AI gateway self-hosted vs managed, open-source LLM proxy comparison, Ferro Labs Managed]
 ---
 
-The open-source gateway is the engine that powers both editions. FerroCloud wraps it with multi-tenancy, a management dashboard, durable billing, and enterprise-grade security plugins.
+The open-source gateway is the engine that powers both editions. Ferro Labs Managed wraps it with multi-tenancy, a management dashboard, durable billing, semantic caching, and enterprise security plugins.
 
 ## Feature comparison
 
-| Feature | OSS Gateway | FerroCloud |
+| Feature | OSS Gateway | Ferro Labs Managed |
 |---|---|---|
-| **Providers** | 29 providers, 2,500+ models | Same |
-| **Routing strategies** | 8 (single, fallback, loadbalance, conditional, least-latency, cost-optimized, content-based, ab-test) | Same |
-| **Streaming** | ✅ SSE + full MCP agentic loop | Same |
-| **MCP tool servers** | ✅ | Same |
-| **Plugins** | 6 OSS plugins | 6 OSS + 5 enterprise plugins |
-| | `word-filter`, `max-token`, `response-cache`, `request-logger`, `rate-limit`, `budget` | + `pii-redact`, `secret-scan`, `prompt-shield`, `schema-guard`, `regex-guard` |
-| **Prompt templates** | ✅ Config-file defined | ✅ Config-file + Dashboard UI |
-| **Admin REST API** | ✅ Full read/write | ✅ Same + Team scoping |
-| **Multi-tenancy** | ❌ Single-tenant | ✅ Isolated per-tenant gateway instances |
-| **Dashboard** | ❌ | ✅ Usage, cost, logs, key management |
-| **Virtual key management** | Config file | Dashboard + API |
-| **Spend tracking** | In-memory (resets on restart) | Durable (PostgreSQL), per-key/team |
-| **Billing integration** | ❌ | ✅ Stripe |
-| **SSO / OAuth** | ❌ | ✅ Google, GitHub, SAML |
-| **Audit logs** | `request-logger` plugin (SQLite/Postgres) | Cloud-hosted, queryable |
-| **Prometheus metrics** | ✅ `/metrics` endpoint | ✅ Pre-built Grafana dashboards |
-| **Alerting** | Bring your own | Built-in (cost thresholds, error rate) |
-| **SLA** | None (community support) | 99.9% uptime SLA |
-| **Support** | GitHub Issues | Priority email + Slack |
+| **Providers** | 29 providers, 2,500+ models | ✅ Same |
+| **Routing strategies** | 8 (single, fallback, loadbalance, conditional, least-latency, cost-optimized, content-based, ab-test) | ✅ Same |
+| **Streaming** | ✅ SSE + full MCP agentic loop | ✅ Same |
+| **MCP tool servers** | ✅ | ✅ Same |
+| **OSS Plugins** | ✅ 6 plugins | ✅ 6 plugins |
+| | `word-filter`, `max-token`, `response-cache`, `request-logger`, `rate-limit`, `budget` | Same |
+| **Enterprise Plugins** | — | ✅ 5 additional plugins (Ferro Labs Managed) |
+| | | `pii-redact`, `secret-scan`, `prompt-shield`, `schema-guard`, `regex-guard` |
+| **Prompt templates** | ✅ Config-file defined | ✅ Config-file + Dashboard UI (Ferro Labs Managed) |
+| **Admin REST API** | ✅ Full read/write | ✅ Same + Team scoping (Ferro Labs Managed) |
+| **Multi-tenancy** | — | ✅ Isolated per-tenant gateway instances (Ferro Labs Managed) |
+| **Dashboard** | — | ✅ Usage, cost, logs, key management (Ferro Labs Managed) |
+| **Virtual key management** | Config file | ✅ Dashboard + API (Ferro Labs Managed) |
+| **Spend tracking** | In-memory (resets on restart) | ✅ Durable (PostgreSQL), per-key/team (Ferro Labs Managed) |
+| **Semantic caching** | — | ✅ pgvector-based similarity cache (Ferro Labs Managed) |
+| **Billing integration** | — | ✅ Stripe (Ferro Labs Managed) |
+| **SSO / OAuth** | — | ✅ Google, GitHub, SAML (Ferro Labs Managed) |
+| **Audit logs** | `request-logger` plugin (SQLite/Postgres) | ✅ Cloud-hosted, queryable (Ferro Labs Managed) |
+| **Prometheus metrics** | ✅ `/metrics` endpoint | ✅ Pre-built Grafana dashboards (Ferro Labs Managed) |
+| **Alerting** | Bring your own | ✅ Built-in (cost thresholds, error rate) (Ferro Labs Managed) |
+| **SLA** | None (community support) | ✅ 99.9% uptime SLA (Ferro Labs Managed) |
+| **Support** | GitHub Issues | ✅ Priority email + Slack (Ferro Labs Managed) |
 | **License** | Apache 2.0 | Proprietary |
 | **Deployment** | Self-hosted | Managed cloud (hosted by Ferro Labs) |
 
+## Ferro Labs Managed plans
+
+The open-source AI Gateway is fully available for self-hosting today. Ferro Labs Managed plans and pricing are coming soon.
+
+:::info Coming soon
+Ferro Labs Managed pricing and feature tiers will be announced when the platform exits early access. [Join the waitlist →](https://www.ferrolabs.ai/)
+:::
+
 ## Security plugins (detail)
 
-The five enterprise security plugins require FerroCloud because they depend on ML inference services that run server-side:
+The five enterprise security plugins require Ferro Labs Managed because they depend on ML inference services that run server-side:
 
 | Plugin | What it does | Requires |
 |---|---|---|
-| `pii-redact` | Detects and redacts PII (names, emails, phone numbers, SSNs…) using NER models | FerroCloud |
-| `secret-scan` | Detects leaked API keys, tokens, and credentials using pattern + entropy analysis | FerroCloud |
-| `prompt-shield` | Scores user messages for prompt injection attempts using a fine-tuned classifier | FerroCloud |
-| `schema-guard` | Validates model JSON output against a JSON Schema before returning to client | FerroCloud |
-| `regex-guard` | Blocks / warns on arbitrary regex rules (custom compliance patterns) | FerroCloud |
+| `pii-redact` | Detects and redacts PII (names, emails, phone numbers, SSNs…) using NER models | Ferro Labs Managed |
+| `secret-scan` | Detects leaked API keys, tokens, and credentials using pattern + entropy analysis | Ferro Labs Managed |
+| `prompt-shield` | Scores user messages for prompt injection attempts using a fine-tuned classifier | Ferro Labs Managed |
+| `schema-guard` | Validates model JSON output against a JSON Schema before returning to client | Ferro Labs Managed |
+| `regex-guard` | Blocks / warns on arbitrary regex rules (custom compliance patterns) | Ferro Labs Managed |
 
 The OSS `word-filter` plugin provides simple keyword blocking without a cloud dependency.
 
@@ -53,17 +64,38 @@ The OSS `word-filter` plugin provides simple keyword blocking without a cloud de
 - You want to self-host without per-seat licensing
 - You are contributing to the open-source project
 
-## When to use FerroCloud
+## When to use Ferro Labs Managed
 
 - You need multi-tenant isolation (SaaS product built on top of Ferro)
 - You need PII redaction, prompt injection protection, or secret scanning
 - You want a managed dashboard with spend controls and team management
 - You prefer SLA-backed infrastructure without DevOps overhead
 
+## Migration path: OSS → Ferro Labs Managed
+
+Start with the open-source gateway. Upgrade to Ferro Labs Managed when you hit one of these triggers:
+
+1. **You need multi-tenant isolation.** Your SaaS product has multiple customers and you need per-tenant gateway instances, usage tracking, and billing. The OSS gateway is single-tenant by design.
+
+2. **You need enterprise security plugins.** Your compliance team requires PII redaction, prompt injection detection, or secret scanning. These plugins depend on ML inference services that only run in Ferro Labs Managed.
+
+3. **You need durable spend tracking.** The OSS `budget` plugin tracks spend in-memory — it resets on restart. Ferro Labs Managed stores spend data in PostgreSQL with per-key, per-team granularity and Stripe billing integration.
+
+:::tip Start OSS, upgrade when ready
+Your `config.yaml` is compatible between OSS and Ferro Labs Managed. Migration is a deployment change, not a config rewrite. [Join the Ferro Labs Managed waitlist →](https://www.ferrolabs.ai/)
+:::
+
 ## Data handling
 
-Both editions process requests exclusively at runtime — model inputs and outputs are not stored by default. Enabling the `request-logger` plugin (OSS) or enabling logging in FerroCloud explicitly opts you into persistence. See [data handling](/security/data-handling) for details.
+Both editions process requests exclusively at runtime — model inputs and outputs are not stored by default. Enabling the `request-logger` plugin (OSS) or enabling logging in Ferro Labs Managed explicitly opts you into persistence. See [data handling](/security/data-handling) for details.
 
 ## Licensing
 
-The open-source gateway is licensed under [Apache 2.0](https://github.com/ferro-labs/ai-gateway/blob/main/LICENSE). You can use it commercially, modify it, and distribute it. FerroCloud is a proprietary managed service.
+The open-source gateway is licensed under [Apache 2.0](https://github.com/ferro-labs/ai-gateway/blob/main/LICENSE). You can use it commercially, modify it, and distribute it. Ferro Labs Managed is a proprietary managed service.
+
+## Related pages
+
+- [Ferro Labs Managed overview](/ferrocloud/overview) — architecture, plans, and features
+- [Semantic caching](/ferrocloud/semantic-cache) — pgvector-based response cache (Ferro Labs Managed Pro+)
+- [Enterprise features](/enterprise) — SSO, RBAC, audit logs, compliance
+- [Benchmarks](/benchmarks) — performance data for the OSS gateway engine

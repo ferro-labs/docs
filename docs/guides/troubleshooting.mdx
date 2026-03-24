@@ -1,0 +1,504 @@
+---
+title: Troubleshooting
+description: "Solutions for common Ferro Labs AI Gateway issues — provider keys, circuit breakers, streaming, MCP timeouts, rate limiting, config reload, Docker health checks, and Prometheus scraping."
+keywords: [AI gateway troubleshooting, LLM proxy debugging, gateway error codes, AI gateway FAQ, gateway connection issues]
+---
+
+This page covers the most common issues encountered when running the Ferro Labs AI Gateway and how to resolve them.
+
+## Provider key not picked up at startup
+
+**Symptom:** The gateway starts but returns `401 Unauthorized` for every request to a provider you configured.
+
+**Likely cause:** The environment variable referenced in `config.yaml` is not set, misspelled, or not visible to the gateway process.
+
+**Fix:**
+
+Check whether the variable is available inside the running container:
+
+```bash
+# Docker
+docker inspect --format '{{range .Config.Env}}{{println .}}{{end}}' ferrogw | grep OPENAI
+
+# Local process
+env | grep OPENAI_API_KEY
+```
+
+Verify the variable name in `config.yaml` matches exactly (including case):
+
+```yaml
+providers:
+  - name: openai
+    type: openai
+    api_key: ${OPENAI_API_KEY}   # must match the env var name exactly
+```
+
+:::warning
+Never hard-code API keys in `config.yaml`. Always use environment variable references (`${VAR}`) and inject secrets via your orchestrator or `.env` file.
+:::
+
+---
+
+## Circuit breaker opens immediately
+
+**Symptom:** After a single failed request the target is excluded from routing and the gateway returns errors or falls through to the next target.
+
+**Likely cause:** `failure_threshold` is set to `1`, so one failure trips the breaker. Alternatively, the upstream provider is genuinely down.
+
+**Fix:**
+
+First, check upstream health:
+
+```bash
+curl -s http://localhost:8080/health | jq .
+```
+
+If the provider is healthy, raise the threshold:
+
+```yaml
+targets:
+  - virtual_key: openai
+    circuit_breaker:
+      failure_threshold: 5    # require 5 consecutive failures before opening
+      success_threshold: 2
+      timeout: "30s"
+```
+
+:::tip
+Set `failure_threshold` to at least `3` in production to avoid flapping on transient errors.
+:::
+
+---
+
+## Streaming responses truncated
+
+**Symptom:** Server-sent event (SSE) streams cut off before the model finishes generating. The client receives a partial response.
+
+**Likely cause:** A reverse proxy or load balancer between the client and the gateway is timing out before the stream completes.
+
+**Fix:**
+
+If you use nginx in front of the gateway, increase the read timeout:
+
+```nginx
+location /v1/ {
+    proxy_pass http://gateway:8080;
+    proxy_read_timeout 300s;
+    proxy_buffering off;
+    proxy_set_header Connection '';
+    proxy_http_version 1.1;
+    chunked_transfer_encoding off;
+}
+```
+
+If the gateway itself is timing the request out, check your target-level timeout configuration. Streaming requests to large models can take 60 seconds or more.
+
+---
+
+## MCP server connection timeout
+
+**Symptom:** Requests that should trigger tool calls return a plain text response, or the gateway logs `mcp connection timeout`.
+
+**Likely cause:** The MCP server URL is wrong, the server is not running, or a firewall is blocking the connection.
+
+**Fix:**
+
+Check the gateway logs for MCP-related errors:
+
+```bash
+docker logs ferrogw 2>&1 | grep -i mcp
+```
+
+Test connectivity from the gateway's network:
+
+```bash
+# From inside the container
+docker exec ferrogw curl -sf http://mcp-server:3001/mcp
+```
+
+Verify the URL and timeout in `config.yaml`:
+
+```yaml
+mcp_servers:
+  - name: filesystem
+    url: "http://mcp-server:3001/mcp"   # must be reachable from the gateway
+    timeout_seconds: 15                   # increase if the server is slow to respond
+    max_call_depth: 5
+```
+
+:::tip
+If the MCP server runs in a separate Docker Compose service, make sure both services are on the same Docker network.
+:::
+
+---
+
+## Rate limiter firing unexpectedly
+
+**Symptom:** Clients receive `429 Too Many Requests` well below expected traffic levels.
+
+**Likely cause:** The `burst` value is too low, or the global rate limit is being confused with the per-key limit. The global bucket drains across all clients combined.
+
+**Fix:**
+
+Review your rate-limit plugin configuration. The global `requests_per_second` applies to **all traffic**, while `key_rpm` applies per API key:
+
+```yaml
+plugins:
+  - name: rate-limit
+    type: ratelimit
+    stage: before_request
+    enabled: true
+    config:
+      requests_per_second: 100   # global: 100 req/s across all clients
+      burst: 200                 # allow short bursts up to 200
+      key_rpm: 60                # per-key: max 60 requests per minute
+```
+
+If you only want per-key limits and no global cap, omit `requests_per_second` and `burst`:
+
+```yaml
+plugins:
+  - name: rate-limit
+    type: ratelimit
+    stage: before_request
+    enabled: true
+    config:
+      key_rpm: 60
+```
+
+Rate checks execute in order: **global, then per-key, then per-user**. The first exceeded limit triggers the `429`.
+
+---
+
+## Config reload not taking effect
+
+**Symptom:** You edited `config.yaml` but the gateway behavior has not changed.
+
+**Likely cause:** The `GATEWAY_CONFIG` environment variable points to a different file, or the edited file has a YAML syntax error that causes a silent reload failure.
+
+**Fix:**
+
+Confirm which file the gateway is loading:
+
+```bash
+echo $GATEWAY_CONFIG
+# Should print the path to the config file you edited
+```
+
+Validate the YAML before reloading:
+
+```bash
+# Quick syntax check (requires yq or python)
+yq eval '.' config.yaml > /dev/null && echo "YAML OK" || echo "YAML ERROR"
+
+# Or with Python
+python3 -c "import yaml; yaml.safe_load(open('config.yaml'))"
+```
+
+After fixing any syntax issues, restart the gateway:
+
+```bash
+docker restart ferrogw
+```
+
+---
+
+## High memory usage under load
+
+**Symptom:** The gateway process memory grows steadily under sustained traffic and eventually OOMs.
+
+**Likely cause:** Too many concurrent connections, an unbounded response cache, or a memory leak in a plugin.
+
+**Fix:**
+
+If you use the `response-cache` plugin, set a maximum entry count:
+
+```yaml
+plugins:
+  - name: response-cache
+    type: transform
+    stage: before_request
+    enabled: true
+    config:
+      max_entries: 5000         # cap the cache to prevent unbounded growth
+      ttl_seconds: 300
+```
+
+Profile the gateway with pprof to identify the source of allocations:
+
+```bash
+# Requires LOG_LEVEL=debug or pprof enabled
+curl -s http://localhost:8080/debug/pprof/heap > heap.out
+go tool pprof heap.out
+```
+
+:::tip
+In Docker deployments, set memory limits on the container (`--memory=2g`) so an OOM kills the container instead of the host.
+:::
+
+---
+
+## Docker healthcheck failing
+
+**Symptom:** Docker reports the gateway container as `unhealthy` even though it is processing requests.
+
+**Likely cause:** The healthcheck is hitting the wrong port or path.
+
+**Fix:**
+
+The gateway exposes its health endpoint at `/health` on the configured `PORT` (default `8080`). Make sure your `docker-compose.yml` or `Dockerfile` healthcheck matches:
+
+```yaml
+services:
+  gateway:
+    image: ghcr.io/ferrolabs/ferrogw:latest
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+```
+
+If you changed the port via the `PORT` environment variable, update the healthcheck URL to match:
+
+```yaml
+environment:
+  PORT: "9090"
+healthcheck:
+  test: ["CMD", "curl", "-sf", "http://localhost:9090/health"]
+```
+
+---
+
+## Prometheus scrape returning empty
+
+**Symptom:** Prometheus shows no metrics for the gateway, or `curl` to the metrics endpoint returns an empty body.
+
+**Likely cause:** The metrics endpoint is not enabled, or Prometheus is scraping the wrong port.
+
+**Fix:**
+
+Verify the metrics endpoint is responding:
+
+```bash
+curl -s http://localhost:8080/metrics | head -20
+```
+
+If you get a `404`, confirm that metrics are enabled in your server settings. The gateway exposes Prometheus metrics at `GET /metrics` by default on the same port as the API.
+
+Check your `prometheus.yml` targets:
+
+```yaml
+scrape_configs:
+  - job_name: ferrogw
+    static_configs:
+      - targets: ["gateway-host:8080"]   # must match the gateway's PORT
+    scrape_interval: 15s
+```
+
+:::tip
+If the gateway runs inside Docker Compose and Prometheus runs in the same stack, use the service name as the host: `targets: ["gateway:8080"]`.
+:::
+
+---
+
+## 502 Bad Gateway from all providers
+
+**Symptom:** Every request returns `502 Bad Gateway` regardless of the target provider.
+
+**Likely cause:** All circuit breakers are open because every upstream provider is failing (or was recently failing).
+
+**Fix:**
+
+Check health to see provider status:
+
+```bash
+curl -s http://localhost:8080/health | jq .
+```
+
+If the upstream providers have recovered but circuit breakers are still open, they will close automatically after the configured `timeout` period. You can speed this up by restarting the gateway:
+
+```bash
+docker restart ferrogw
+```
+
+To prevent all breakers from opening simultaneously, stagger your `failure_threshold` and `timeout` values across targets:
+
+```yaml
+targets:
+  - virtual_key: openai
+    circuit_breaker:
+      failure_threshold: 5
+      timeout: "30s"
+  - virtual_key: anthropic
+    circuit_breaker:
+      failure_threshold: 3
+      timeout: "20s"
+  - virtual_key: gemini
+    circuit_breaker:
+      failure_threshold: 5
+      timeout: "45s"
+```
+
+---
+
+## Model not found error
+
+**Symptom:** The gateway returns an error like `model "gpt4o" not found` even though you have an OpenAI target configured.
+
+**Likely cause:** The model name in the request does not match any entry in the built-in catalog or your configured models list. Model names are exact-match (e.g. `gpt-4o`, not `gpt4o`).
+
+**Fix:**
+
+List available models through the gateway:
+
+```bash
+curl -s http://localhost:8080/v1/models \
+  -H "Authorization: Bearer $API_KEY" | jq '.data[].id'
+```
+
+If you need to map a custom name to a real model, use model aliases in your config:
+
+```yaml
+model_aliases:
+  - alias: "our-default"
+    model: "gpt-4o-mini"
+    target_key: openai
+  - alias: "our-smart"
+    model: "claude-sonnet-4-20250514"
+    target_key: anthropic
+```
+
+---
+
+## Content-based routing not matching
+
+**Symptom:** Requests that should match a `prompt_regex` rule are falling through to the default target instead.
+
+**Likely cause:** The regex pattern is not matching due to case sensitivity, or the pattern has a syntax error that prevented compilation.
+
+**Fix:**
+
+Regex patterns are compiled at gateway startup. An invalid regex causes a **startup error** (not a silent failure). Check gateway startup logs for compilation errors.
+
+If the gateway started successfully but routing is wrong, test your regex independently:
+
+```bash
+# Test a Go-compatible regex
+echo "Write a Python function to sort a list" | grep -P '(?i)(code|function|class|def |import )'
+```
+
+Remember that the gateway uses Go regular expressions. Use `(?i)` at the start for case-insensitive matching:
+
+```yaml
+strategy:
+  mode: content-based
+  content_conditions:
+    - type: prompt_regex
+      value: "(?i)(code|function|class|def |import |bug|error|debug)"
+      target_key: deepseek
+```
+
+---
+
+## A/B test weights not reflecting expected distribution
+
+**Symptom:** You configured an 80/20 split but after 50 requests you see a 60/40 ratio.
+
+**Likely cause:** With small sample sizes, random weighted selection naturally deviates from the configured weights. This is expected statistical variance, not a bug.
+
+**Fix:**
+
+Weight normalization works as follows: weights are relative, so `80` and `20` produce an 80/20 split. Over a large number of requests (1,000+) the actual distribution converges toward the configured ratio.
+
+A few things to check:
+
+- **Zero weights**: If a variant has weight `0`, it is treated as weight `1` and receives roughly equal traffic with other zero-weight variants. This is by design to prevent accidentally silencing a variant.
+- **Circuit breakers**: If the target backing one variant has its circuit breaker open, all traffic goes to the remaining variant.
+- **Sample size**: At 100 requests with an 80/20 split, a 70/30 or 90/10 actual split is within normal variance. Collect at least 1,000 requests before evaluating.
+
+```yaml
+strategy:
+  mode: ab-test
+  ab_variants:
+    - target_key: openai
+      weight: 80
+      label: control
+    - target_key: anthropic
+      weight: 20
+      label: challenger
+```
+
+---
+
+## Budget plugin not persisting across restarts
+
+**Symptom:** After restarting the gateway, all API key spend counters reset to zero.
+
+**Likely cause:** This is by design. The budget plugin uses an **in-memory** store that resets on every restart.
+
+**Fix:**
+
+The open-source budget plugin is intended for session-scoped soft limits and development quotas. If you need durable spend tracking that survives restarts:
+
+- Use [Ferro Labs Managed](https://ferrolabs.ai) for persistent billing enforcement with database-backed spend tracking.
+- As a workaround, export spend data via the `/metrics` endpoint before restarting and use your monitoring system for budget alerts.
+
+:::warning
+Do not rely on the in-memory budget plugin as your only spend control in production. A restart silently resets all limits. Use it as a safety net alongside durable billing in Ferro Labs Managed.
+:::
+
+---
+
+## Request logger not writing to Postgres
+
+**Symptom:** The `request-logger` plugin is enabled but no rows appear in the Postgres `request_logs` table.
+
+**Likely cause:** The connection string (DSN) is wrong, Postgres is not reachable from the gateway, or the database/table does not exist.
+
+**Fix:**
+
+Test connectivity from the gateway's environment:
+
+```bash
+# From inside the Docker container
+docker exec ferrogw sh -c \
+  'pg_isready -h postgres -p 5432 -U ferro || echo "Postgres unreachable"'
+
+# Or test with curl/psql from the host
+psql "postgres://ferro:ferro_secret@localhost:5432/ferro_logs" -c "SELECT 1;"
+```
+
+Verify the plugin config matches the actual Postgres host, port, user, and database:
+
+```yaml
+plugins:
+  - name: request-logger
+    type: postgres-logger
+    connection_string: postgres://ferro:ferro_secret@postgres:5432/ferro_logs?sslmode=disable
+    log_request_body: true
+    log_response_body: false
+```
+
+:::tip
+If you run both the gateway and Postgres in Docker Compose, use the Compose service name (e.g. `postgres`) as the hostname, not `localhost`.
+:::
+
+Check gateway logs for connection errors:
+
+```bash
+docker logs ferrogw 2>&1 | grep -i postgres
+```
+
+---
+
+## Related pages
+
+- [Configuration](/getting-started/configuration)
+- [Plugins](/guides/plugins)
+- [MCP integration](/guides/mcp)
+- [Observability](/guides/observability)
+- [Monitoring and operations](/operations/monitoring)

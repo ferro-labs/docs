@@ -1,0 +1,90 @@
+---
+title: Why Ferro Labs AI Gateway
+description: "Compare Ferro Labs AI Gateway to LiteLLM, Portkey, Bifrost, and Cloudflare. An honest guide to choosing the right open-source AI gateway."
+keywords:
+  - LiteLLM alternative
+  - Portkey alternative
+  - AI gateway comparison
+  - self-hosted LLM proxy
+  - open source AI gateway Go
+---
+
+# Why Ferro Labs AI Gateway
+
+AI gateways differ more than they look. Here's how to think about the choice.
+
+## Decision Table
+
+| Criteria | Ferro Labs OSS | LiteLLM | Portkey | Bifrost | Cloudflare AI Gateway |
+|---|---|---|---|---|---|
+| **Language / runtime** | Go | Python | Node | Go | — |
+| **Latency overhead** | &lt;1 ms p99 | Varies | Cloud-dependent | &lt;1 ms | Cloud-only |
+| **Self-hostable** | Yes | Yes | No | Yes | No |
+| **OSS license** | Apache 2.0 | Apache 2.0 | Proprietary | MIT | Proprietary |
+| **Multi-tenant** | Ferro Labs Managed | Yes | Yes | No | No |
+| **MCP support** | Yes | No | No | No | No |
+| **Single binary** | Yes | No | No | Yes | No |
+| **Provider count** | 29 | 100+ | Varies | Fewer | Limited |
+| **Active development** | Yes | Yes | Yes | Yes | Yes |
+
+:::info
+Provider count is not the whole story. Ferro Labs covers the 29 providers that handle the vast majority of production traffic. LiteLLM's larger catalog includes many community-contributed integrations that vary in maintenance quality.
+:::
+
+## Which Tool Fits Your Situation
+
+### 1. Solo dev or small team self-hosting
+
+**Best fit: Ferro Labs OSS**
+
+You want something that runs in minutes, has no dependencies to manage, and covers the providers you actually use. Ferro Labs AI Gateway ships as a single Go binary, works with a single config file, and supports 29 providers out of the box.
+
+### 2. Python-first team already using LangChain
+
+**Best fit: LiteLLM**
+
+If your stack is deeply Python and you rely on tight LangChain integration, LiteLLM may fit better. It speaks native Python, integrates directly with the LangChain ecosystem, and has the largest provider catalog. The tradeoff is a heavier runtime footprint and Python process management in production.
+
+### 3. Enterprise needing managed SaaS
+
+**Best fit: Ferro Labs Managed**
+
+When you need multi-tenant isolation, a dashboard, enterprise plugins, and someone else handling uptime, Ferro Labs Managed gives you the same gateway engine as a managed service. Portkey is also worth evaluating here if you don't need self-hosting as a fallback.
+
+## What Ferro Labs Does Better
+
+These are concrete differences, not marketing claims.
+
+### 1. Zero runtime dependencies
+
+Ferro Labs AI Gateway compiles to a single Go binary. The Docker image is under 20 MB. There is no interpreter, no virtual environment, no package manager involved at deploy time. This matters when you are running in constrained environments or want reproducible deploys.
+
+### 2. Eight routing strategies
+
+Ferro Labs ships with 8 routing strategies including content-based routing and A/B testing. You can route by model, cost, latency, or the content of the request itself — without writing custom middleware.
+
+### 3. Agentic MCP loop built-in
+
+The gateway runs a full MCP tool loop internally. Your client sends a normal chat completion request; the gateway handles tool discovery, execution, and result injection. No client-side changes required.
+
+:::tip
+The built-in MCP loop means you can add tool-use capabilities to any application that speaks the OpenAI API format, even if that application has no concept of function calling.
+:::
+
+### 4. Single config file, 29 providers
+
+One configuration file activates any combination of 29 providers. Ferro Labs AI Gateway discovers credentials from environment variables automatically — no per-provider setup code.
+
+### 5. Apache 2.0 with no surprises
+
+Ferro Labs OSS is Apache 2.0 licensed. There are no "community" vs. "enterprise" edition splits in the open-source core, and no license changes to worry about as you scale.
+
+:::info
+Bifrost is MIT-licensed, which is also permissive. LiteLLM is Apache 2.0 as well. Portkey and Cloudflare AI Gateway are proprietary. Pick the license model that matches your organization's requirements.
+:::
+
+## Related pages
+
+- [Migrating from LiteLLM](/guides/migration-litellm)
+- [Migrating from Portkey](/guides/migration-portkey)
+- [Benchmarks](/benchmarks)

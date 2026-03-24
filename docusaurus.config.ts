@@ -6,7 +6,7 @@ import type * as Preset from '@docusaurus/preset-classic';
 
 const config: Config = {
   title: 'Ferro Labs AI Gateway',
-  tagline: 'One gateway for every AI model — 19 providers, 2,500+ models, 11 plugins.',
+  tagline: 'One gateway for every AI model — 29 providers, 2,500+ models, 11 plugins, 8 routing strategies.',
   favicon: 'assets/branding/favicon.ico',
 
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
@@ -95,7 +95,7 @@ const config: Config = {
     image: 'assets/branding/logo-light.png',
     titleDelimiter: '|',
     metadata: [
-      { name: 'keywords', content: 'AI gateway, LLM proxy, OpenAI compatible, open source AI, LLM routing, multi-provider AI, self-hosted AI gateway, AI middleware' },
+      { name: 'keywords', content: 'AI gateway, LLM proxy, OpenAI compatible, open source AI gateway, Go LLM proxy, LLM routing, multi-provider AI, self-hosted LLM gateway, AI middleware, Ferro Labs Managed, AI gateway v1.0.0' },
       { property: 'og:type', content: 'website' },
       { property: 'og:site_name', content: 'Ferro Labs AI Gateway Docs' },
       { name: 'twitter:card', content: 'summary_large_image' },
@@ -104,7 +104,7 @@ const config: Config = {
     announcementBar: {
       id: 'ferrocloud-coming-soon',
       content:
-        'Join <strong>FerroCloud</strong> coming soon. LLM observability data, optimizes prompts and models, sets up evals, and runs A/B tests. <a href="https://www.ferrolabs.ai/" target="_blank" rel="noopener noreferrer">Join the waitlist →</a>',
+        '🚀 <strong>Ferro Labs Managed</strong> — the managed version of Ferro Labs AI Gateway — is now accepting early access signups. Multi-tenant, dashboard, semantic caching, enterprise plugins. <a href="https://www.ferrolabs.ai/" target="_blank" rel="noopener noreferrer">Join the waitlist →</a>',
       backgroundColor: '#ecfdf5',
       textColor: '#065f46',
       isCloseable: true,

@@ -1,10 +1,32 @@
 ---
 title: Changelog
-description: Release history for the Ferro Labs AI Gateway — content-based routing, A/B testing, per-key rate limiting, budget controls, MCP integration, new providers, plugins, and bug fixes across all versions.
-keywords: [AI gateway changelog, LLM proxy releases, AI gateway version history, gateway updates, MCP integration release]
+description: "Release history for Ferro Labs AI Gateway v1.0.0 — stable release with 29 providers, 8 routing strategies, MCP streaming, content-based routing, A/B testing, and budget controls."
+keywords: [AI gateway changelog, LLM proxy releases, AI gateway version history, AI gateway v1.0.0, gateway updates, MCP integration release]
 ---
 
 Full release notes are also on [GitHub Releases](https://github.com/ferro-labs/ai-gateway/releases).
+
+## v1.0.0 — 2026-03-24 — Stable release
+
+v1.0.0 is the first stable release of the Ferro Labs AI Gateway. Starting with this release, the project follows [semantic versioning](https://semver.org/): breaking changes will only occur in major version bumps. The configuration format and OpenAI-compatible API are now part of the stable contract.
+
+### What's new in v1.0.0
+
+- **MCP streaming support** — clients can send `stream: true` when MCP servers are configured. The gateway resolves all tool calls internally and returns the final answer as SSE. Added in v1.0.0-rc.1.
+- **29 providers** — 10 providers added since v0.6.5: Cerebras, NVIDIA NIM, Cloudflare Workers AI, Databricks, Novita AI, Qwen (Alibaba), Moonshot AI, SambaNova, DeepInfra, OpenRouter.
+- **8 routing strategies** — content-based and A/B test routing (from v0.8.5) are now stable.
+- **Per-key and per-user rate limiting** — `key_rpm` and `user_rpm` fields in the rate-limit plugin (from v0.8.5).
+- **Budget plugin** — per-key spend tracking and enforcement (from v0.8.5).
+- **Published benchmarks** — sub-millisecond p99 overhead at 500 RPS, 100% success rate sustained. See [benchmarks](/benchmarks).
+
+### Stability guarantees
+
+- The `config.yaml` schema is stable. Existing configs will continue to work across v1.x releases.
+- The OpenAI-compatible API (`/v1/chat/completions`, `/v1/embeddings`, `/v1/models`, `/v1/images/generations`) wire format is stable.
+- The admin API (`/admin/*`) is stable. New endpoints may be added but existing ones will not change in breaking ways.
+- Prometheus metric names and labels are stable.
+
+---
 
 ## v0.8.5 — 2026-03-12
 
@@ -73,8 +95,8 @@ Full release notes are also on [GitHub Releases](https://github.com/ferro-labs/a
 - **Hugging Face** — `HUGGING_FACE_API_KEY`
 - **Google Vertex AI** — `VERTEX_AI_PROJECT_ID` (ADC)
 - **AWS Bedrock (static credentials)** — `AWS_ACCESS_KEY_ID` + `AWS_SECRET_ACCESS_KEY` option
-- Provider subpackage refactor: unified factory pattern across all 19 providers
-- Total providers: **19**; total models in catalog: **2,531**
+- Provider subpackage refactor: unified factory pattern across all providers
+- Total providers: **19** (at time of release); total models in catalog: **2,531**
 
 ## v0.6.1 — 2026-03-06
 

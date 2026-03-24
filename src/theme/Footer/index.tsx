@@ -41,8 +41,9 @@ const DOCS_LINKS = [
   { label: 'Quickstart', href: '/getting-started/quickstart', external: false },
   { label: 'Providers', href: '/guides/providers', external: false },
   { label: 'Routing Policies', href: '/guides/routing-policies', external: false },
-  { label: 'Plugins', href: '/guides/plugins', external: false },
+  { label: 'Benchmarks', href: '/benchmarks', external: false },
   { label: 'MCP Integration', href: '/guides/mcp', external: false },
+  { label: 'Ferro Labs Managed', href: '/ferrocloud/overview', external: false },
   { label: 'API Reference', href: '/api', external: false },
 ];
 
@@ -72,7 +73,7 @@ export default function Footer(): React.ReactElement {
             Ferro Labs
           </div>
           <p className={styles.brandDesc}>
-            Open-source AI gateway for 19 providers and 2,500+ models.
+            Open-source AI gateway for 29 providers and 2,500+ models.
             Self-hosted, Apache 2.0 licensed, and production-ready.
           </p>
           <div className={styles.socialRow}>
@@ -140,12 +141,12 @@ export default function Footer(): React.ReactElement {
             <GitHubIcon />
             <div>
               <div className={styles.githubCardTitle}>ferro-labs/ai-gateway</div>
-              <div className={styles.githubCardSub}>Apache 2.0 · v0.8.0</div>
+              <div className={styles.githubCardSub}>Apache 2.0 · v1.0.0</div>
             </div>
           </a>
           <div className={styles.badges}>
             <span className={styles.badge}>Go 1.24</span>
-            <span className={styles.badge}>19 Providers</span>
+            <span className={styles.badge}>29 Providers</span>
             <span className={styles.badge}>2,500+ Models</span>
           </div>
         </div>

@@ -1,10 +1,10 @@
 openapi: 3.0.3
 info:
   title: Ferro Labs AI Gateway
-  version: 0.8.0
+  version: 1.0.0
   description: |
     The Ferro Labs AI Gateway is an open-source, high-performance LLM proxy that provides a
-    unified OpenAI-compatible API across 19 providers and 2,500+ models.
+    unified OpenAI-compatible API across 29 providers and 2,500+ models.
 
     Point any OpenAI-compatible client at `http://localhost:8080` — provider credentials are
     managed server-side via environment variables. No code changes needed.
