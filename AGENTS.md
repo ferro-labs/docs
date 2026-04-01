@@ -4,7 +4,7 @@
 
 Official documentation site for **Ferro Labs AI Gateway** — the open-source AI gateway. Built with Docusaurus 3 and deployed at **https://docs.ferrolabs.ai**.
 
-- **Repo**: `github.com/ferro-labs/docs`
+- **Repo**: `github.com/ferro-labs/ferrolabs-docs`
 - **Framework**: Docusaurus 3.9 + React 19 + TypeScript
 - **Content format**: MDX (Markdown + JSX)
 - **Diagrams**: Mermaid (via `@docusaurus/theme-mermaid`)
@@ -28,7 +28,7 @@ pnpm typecheck             # TypeScript type checking
 ## Project Structure
 
 ```
-docs/
+ferrolabs-docs/
 ├── docs/                            ← Documentation content (MDX files)
 │   ├── intro.mdx                    ← Landing page
 │   ├── changelog.mdx                ← Release changelog
@@ -119,5 +119,5 @@ Contributors must open PRs against `development`, not `main`.
 | OSS Gateway repo | https://github.com/ferro-labs/ai-gateway |
 | Website | https://www.ferrolabs.ai |
 | Twitter/X | https://x.com/ferroLabsAI |
-| Contributing guide | https://github.com/ferro-labs/docs/blob/main/CONTRIBUTING.md |
-| Code of Conduct | https://github.com/ferro-labs/docs/blob/main/CODE_OF_CONDUCT.md |
+| Contributing guide | https://github.com/ferro-labs/ferrolabs-docs/blob/main/CONTRIBUTING.md |
+| Code of Conduct | https://github.com/ferro-labs/ferrolabs-docs/blob/main/CODE_OF_CONDUCT.md |

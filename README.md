@@ -1,7 +1,7 @@
 # Ferro Labs AI Gateway — Documentation
 
-[![CI](https://github.com/ferro-labs/docs/actions/workflows/ci.yml/badge.svg)](https://github.com/ferro-labs/docs/actions/workflows/ci.yml)
-[![Deploy](https://github.com/ferro-labs/docs/actions/workflows/deploy.yml/badge.svg)](https://github.com/ferro-labs/docs/actions/workflows/deploy.yml)
+[![CI](https://github.com/ferro-labs/ferrolabs-docs/actions/workflows/ci.yml/badge.svg)](https://github.com/ferro-labs/ferrolabs-docs/actions/workflows/ci.yml)
+[![Deploy](https://github.com/ferro-labs/ferrolabs-docs/actions/workflows/deploy.yml/badge.svg)](https://github.com/ferro-labs/ferrolabs-docs/actions/workflows/deploy.yml)
 
 Official documentation site for **[Ferro Labs AI Gateway](https://github.com/ferro-labs/ai-gateway)** — the open-source, OpenAI-compatible LLM proxy supporting 19 providers, 2,500+ models, 11 safety plugins, and MCP tool-calling.
 
@@ -58,11 +58,10 @@ PRs should target the `development` branch.
 | Repo | Description |
 |---|---|
 | [ferro-labs/ai-gateway](https://github.com/ferro-labs/ai-gateway) | The OSS gateway — providers, routing, plugins |
-| [ferro-labs/docs](https://github.com/ferro-labs/docs) | This repo |
+| [ferro-labs/ferrolabs-docs](https://github.com/ferro-labs/ferrolabs-docs) | This repo |
 
 ---
 
 ## License
 
 Documentation content is licensed under [Apache 2.0](https://github.com/ferro-labs/ai-gateway/blob/main/LICENSE), the same as the gateway itself.
-
