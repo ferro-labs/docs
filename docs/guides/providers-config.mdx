@@ -1,6 +1,6 @@
 ---
 title: Provider configuration
-description: Environment variables and credentials for all 29 AI providers in the Ferro Labs AI Gateway — API keys, base URLs, and model lists for OpenAI, Anthropic, Gemini, Ollama, Cerebras, NVIDIA NIM, Cloudflare, Databricks, and more.
+description: Environment variables and credentials for all 30 AI providers in the Ferro Labs AI Gateway — API keys, base URLs, and model lists for OpenAI, Anthropic, Gemini, Ollama, Cerebras, NVIDIA NIM, Cloudflare, Databricks, and more.
 keywords: [AI provider configuration, OpenAI API key setup, Anthropic setup, LLM provider credentials, gateway environment variables, provider API keys, Cerebras, NVIDIA NIM, Cloudflare Workers AI, Databricks, OpenRouter]
 ---
 
@@ -62,6 +62,18 @@ export OLLAMA_MODELS=llama3.2,llama3.1,mistral
 ```
 
 `OLLAMA_MODELS` is a comma-separated list of model tags to expose at `/v1/models`.
+
+## Ollama Cloud (hosted)
+
+Ollama Cloud requires an API key. The base URL and exposed models are optional overrides.
+
+```bash
+export OLLAMA_API_KEY=...
+export OLLAMA_CLOUD_BASE_URL=https://ollama.com
+export OLLAMA_CLOUD_MODELS=gpt-oss:20b
+```
+
+`OLLAMA_CLOUD_MODELS` is a comma-separated list of model tags to expose at `/v1/models`.
 
 ## Replicate
 

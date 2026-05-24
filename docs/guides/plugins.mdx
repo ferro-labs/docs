@@ -19,7 +19,7 @@ Each plugin entry in `config.yaml` has `name`, `type`, `stage`, `enabled`, and a
 | `response-cache` | transform | before_request | ✅ |
 | `request-logger` | logging | before_request | ✅ |
 | `rate-limit` | ratelimit | before_request | ✅ |
-| `budget` | budget | before_request + after_request | ✅ |
+| `budget` | guardrail | before_request + after_request | ✅ |
 | `pii-redact` | guardrail | before_request | [Ferro Labs Managed only](/guides/oss-vs-ferrocloud) |
 | `secret-scan` | guardrail | before_request | [Ferro Labs Managed only](/guides/oss-vs-ferrocloud) |
 | `prompt-shield` | guardrail | before_request | [Ferro Labs Managed only](/guides/oss-vs-ferrocloud) |
@@ -237,7 +237,7 @@ Spend data is in-memory and resets on gateway restart. Use this for session-scop
 plugins:
   # Check limit before forwarding
   - name: budget
-    type: budget
+    type: guardrail
     stage: before_request
     enabled: true
     config:
@@ -249,7 +249,7 @@ plugins:
 
   # Record cost after response
   - name: budget
-    type: budget
+    type: guardrail
     stage: after_request
     enabled: true
     config:

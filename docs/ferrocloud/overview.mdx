@@ -18,7 +18,7 @@ flowchart LR
     C --> D2[Anthropic]
     C --> D3[Google Gemini]
     C --> D4[Azure OpenAI]
-    C --> D5[...29 providers]
+    C --> D5[...30 providers]
 ```
 
 Every request flows through the Ferro Labs Managed edge layer — which handles authentication, tenant isolation, rate limiting, and billing — before reaching the same open-source gateway engine used by self-hosted deployments. The engine then routes to the configured AI provider.
@@ -35,7 +35,7 @@ Ferro Labs Managed pricing, plans, and feature tiers will be announced when the 
 
 1. **Zero ops** — No servers to provision, no containers to update, no TLS certificates to rotate. Ferro Labs handles uptime, scaling, and upgrades.
 2. **Durable billing** — Built-in usage metering, spend tracking, and budget enforcement per team or project. No need to wire up your own billing pipeline.
-3. **Enterprise plugins** — Five additional plugins (PII redaction, prompt injection detection, content moderation, guardrails, and data-loss prevention) are available exclusively on Ferro Labs Managed Pro and Enterprise plans.
+3. **Enterprise plugins** — Five additional guardrail plugins (`pii-redact`, `secret-scan`, `prompt-shield`, `schema-guard`, and `regex-guard`) are available exclusively on Ferro Labs Managed Pro and Enterprise plans.
 4. **Team management** — Invite teammates, assign roles, and scope API keys to projects — all from the dashboard.
 
 ## Join the Waitlist

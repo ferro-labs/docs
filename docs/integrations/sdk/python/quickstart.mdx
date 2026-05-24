@@ -77,7 +77,7 @@ for chunk in stream:
 ```python
 response = client.embeddings.create(
     model="text-embedding-3-small",
-    input=["Ferro routes LLM requests", "across 29 providers"],
+    input=["Ferro routes LLM requests", "across 30 providers"],
 )
 
 for item in response.data:
@@ -116,11 +116,15 @@ The SDK supports gateway-specific parameters that the generic OpenAI SDK cannot 
 response = client.chat.completions.create(
     model="gpt-4o",
     messages=[{"role": "user", "content": "Summarize this document"}],
-    template_id="summarizer-v2",           # server-side prompt template
-    template_variables={"tone": "formal"}, # template variables
+    template_id="summarizer-v2",           # server-side prompt template (Managed only)
+    template_variables={"tone": "formal"}, # template variables (Managed only)
     route_tag="premium",                   # override routing strategy
 )
 ```
+
+:::note
+`template_id` / `template_variables` require server-side [prompt templates](/guides/prompt-templates), a **Ferro Labs Managed** feature. They are ignored by the open-source gateway.
+:::
 
 ## Context manager
 

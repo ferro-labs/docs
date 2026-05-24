@@ -174,8 +174,8 @@ plugins:
     stage: before_request
     enabled: true
     config:
-      requests_per_minute: 120
-      burst: 20
+      requests_per_second: 100
+      burst: 100
       key_rpm: 60          # per API key limit (v0.8.5+)
       user_rpm: 30         # per user ID limit (v0.8.5+)
 
@@ -299,7 +299,7 @@ When `mcp_servers` is present, the gateway initialises MCP connections in the ba
 
 ## Complete example
 
-Copy [`config.example.yaml`](https://github.com/ferro-labs/ai-gateway/blob/main/config.example.yaml) from the repository for a full example covering all 29 providers, aliases, and all 11 plugins.
+Copy [`config.example.yaml`](https://github.com/ferro-labs/ai-gateway/blob/main/config.example.yaml) from the repository for a full example covering all 30 providers, aliases, and all 11 plugins.
 
 ## Related pages
 

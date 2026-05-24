@@ -4,6 +4,10 @@ description: Use the Ferro Labs AI Gateway prompt template API to define reusabl
 keywords: [prompt templates AI gateway, LLM prompt management, reusable prompts, prompt variables, system prompt injection]
 ---
 
+:::note Ferro Labs Managed only
+Server-side prompt templates are a **Ferro Labs Managed** feature. They are not available in the open-source gateway. The configuration and API below apply to the Managed offering — see [Ferro Labs Managed](/ferrocloud/overview).
+:::
+
 Prompt templates let you define named, versioned prompts server-side and reference them by ID at request time. The gateway injects the rendered template into the request before forwarding it to the provider — clients never need to re-send long system prompts.
 
 ## Defining a template

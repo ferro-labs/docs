@@ -1,10 +1,10 @@
 ---
 title: Providers
-description: All 29 AI providers supported by the Ferro Labs AI Gateway — OpenAI, Anthropic, Gemini, Mistral, Groq, DeepSeek, Ollama, AWS Bedrock, Azure OpenAI, Cerebras, NVIDIA NIM, Cloudflare, Databricks, and more with virtual key routing.
+description: All 30 AI providers supported by the Ferro Labs AI Gateway — OpenAI, Anthropic, Gemini, Mistral, Groq, DeepSeek, Ollama, AWS Bedrock, Azure OpenAI, Cerebras, NVIDIA NIM, Cloudflare, Databricks, and more with virtual key routing.
 keywords: [AI providers, OpenAI proxy, Anthropic gateway, Gemini proxy, Mistral gateway, Groq proxy, multi-LLM gateway, Ollama proxy, Bedrock gateway, DeepSeek proxy, Cerebras, NVIDIA NIM, Cloudflare Workers AI, Databricks, OpenRouter]
 ---
 
-The gateway supports 29 AI providers. A provider becomes active when its required environment variables are set — no code changes or rebuilds needed.
+The gateway supports 30 AI providers. A provider becomes active when its required environment variables are set — no code changes or rebuilds needed.
 
 ## All providers
 
@@ -25,6 +25,7 @@ The gateway supports 29 AI providers. A provider becomes active when its require
 | **Azure OpenAI** | `azure-openai` | `AZURE_OPENAI_API_KEY` + endpoint + deployment |
 | **Azure Foundry** | `azure-foundry` | `AZURE_FOUNDRY_API_KEY` + `AZURE_FOUNDRY_ENDPOINT` |
 | **Ollama** | `ollama` | `OLLAMA_HOST` (no API key required) |
+| **Ollama Cloud** | `ollama-cloud` | `OLLAMA_API_KEY` |
 | **AWS Bedrock** | `bedrock` | `AWS_REGION` or `AWS_ACCESS_KEY_ID` |
 | **Replicate** | `replicate` | `REPLICATE_API_TOKEN` |
 | **Vertex AI** | `vertex-ai` | `VERTEX_AI_PROJECT_ID` |

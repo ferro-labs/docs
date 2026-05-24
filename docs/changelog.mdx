@@ -1,10 +1,36 @@
 ---
 title: Changelog
-description: "Release history for Ferro Labs AI Gateway v1.0.0 — stable release with 29 providers, 8 routing strategies, MCP streaming, content-based routing, A/B testing, and budget controls."
-keywords: [AI gateway changelog, LLM proxy releases, AI gateway version history, AI gateway v1.0.0, gateway updates, MCP integration release]
+description: "Release history for Ferro Labs AI Gateway — v1.1.0 adds opt-in OpenTelemetry tracing on top of the stable v1.0.0 release with 30 providers, 8 routing strategies, MCP streaming, content-based routing, A/B testing, and budget controls."
+keywords: [AI gateway changelog, LLM proxy releases, AI gateway version history, AI gateway v1.1.0, OpenTelemetry tracing, gateway updates, MCP integration release]
 ---
 
 Full release notes are also on [GitHub Releases](https://github.com/ferro-labs/ai-gateway/releases).
+
+## v1.1.0 — 2026-05-24 — OpenTelemetry tracing
+
+Adds opt-in OpenTelemetry tracing. Off by default — a zero-allocation no-op until an OTLP endpoint or exporter is configured.
+
+### What's new in v1.1.0
+
+- **OpenTelemetry tracing** — every request emits a `gateway.request` span carrying model, token-usage, cost, and routing attributes; plugins and MCP tool calls emit child spans; outbound provider calls are `otelhttp`-instrumented with W3C `traceparent` propagation. OTLP over gRPC or HTTP/protobuf. See [Observability](/guides/observability#opentelemetry-tracing).
+- **Unified trace ID** — the OTel `trace_id`, the structured-log `trace_id`, and the `X-Request-ID` header are the same value per request.
+- **Privacy levels** — `observability.tracing.privacy_level`: `none`, `metadata` (default; redacts email/JWT/AWS keys), or `full`.
+- **Exporter event pathway** — registered exporters receive `gateway.request.completed`/`failed` events via the new `observability.exporters` block. Contract and wiring only; vendor bridges ship in the forthcoming `ai-gateway-plugins` repo.
+- **OTLP headers** — `observability.tracing.headers` (with `${ENV}` interpolation) and the standard `OTEL_EXPORTER_OTLP_HEADERS` env var enable authenticated export to managed backends. The endpoint scheme selects transport security (`https://` ⇒ TLS).
+
+The v1.0.0 stability contract is unchanged — tracing is purely additive.
+
+---
+
+## v1.0.1 – v1.0.10 — Maintenance releases
+
+A series of maintenance releases between the v1.0.0 stable release and v1.1.0:
+
+- **v1.0.10** (2026-05-16) — security maintenance: upgraded `grpc`, `golang.org/x/crypto`, and the `testcontainers-go` dependency chain to clear Dependabot advisories; added `govulncheck` CI scanning.
+- **v1.0.9** (2026-05-14) — toolchain baseline moved from Go 1.24 to Go 1.25. No API or behaviour changes.
+- **v1.0.7 – v1.0.8** — internal refactor: gateway business logic moved from `cmd/ferrogw` into `internal/` packages; integration-test harness completed. No public API changes.
+
+---
 
 ## v1.0.0 — 2026-03-24 — Stable release
 

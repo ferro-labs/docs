@@ -34,8 +34,8 @@ groups:
       # High error rate
       - alert: GatewayHighErrorRate
         expr: |
-          rate(ferrogw_errors_total[5m]) /
-          rate(ferrogw_requests_total[5m]) > 0.05
+          sum(rate(gateway_requests_total{status="error"}[5m])) /
+          sum(rate(gateway_requests_total[5m])) > 0.05
         for: 2m
         labels:
           severity: warning
@@ -46,7 +46,7 @@ groups:
       - alert: GatewayHighLatency
         expr: |
           histogram_quantile(0.99,
-            rate(ferrogw_request_duration_seconds_bucket[5m])
+            rate(gateway_request_duration_seconds_bucket[5m])
           ) > 10
         for: 5m
         labels:
@@ -56,7 +56,7 @@ groups:
 
       # Circuit breaker open
       - alert: GatewayCircuitBreakerOpen
-        expr: ferrogw_circuit_breaker_state == 1
+        expr: gateway_circuit_breaker_state == 1
         for: 1m
         labels:
           severity: critical
@@ -81,12 +81,12 @@ Key panels to build manually if you prefer:
 
 | Panel | Query |
 |---|---|
-| Requests / sec | `rate(ferrogw_requests_total[1m])` |
-| Error rate % | `rate(ferrogw_errors_total[5m]) / rate(ferrogw_requests_total[5m]) * 100` |
-| P50 / P95 / P99 latency | `histogram_quantile(0.99, rate(ferrogw_request_duration_seconds_bucket[5m]))` |
-| Token usage / min | `rate(ferrogw_tokens_total[1m]) * 60` |
-| Cache hit ratio | `rate(ferrogw_cache_hits_total[5m]) / (rate(ferrogw_cache_hits_total[5m]) + rate(ferrogw_cache_misses_total[5m]))` |
-| Provider breakdown | `sum by (provider) (rate(ferrogw_requests_total[5m]))` |
+| Requests / sec | `rate(gateway_requests_total[1m])` |
+| Error rate % | `sum(rate(gateway_requests_total{status="error"}[5m])) / sum(rate(gateway_requests_total[5m])) * 100` |
+| P50 / P95 / P99 latency | `histogram_quantile(0.99, rate(gateway_request_duration_seconds_bucket[5m]))` |
+| Token usage / min | `(rate(gateway_tokens_input_total[1m]) + rate(gateway_tokens_output_total[1m])) * 60` |
+| Estimated spend / hour | `sum by (model) (rate(gateway_request_cost_usd_total[5m])) * 3600` |
+| Provider breakdown | `sum by (provider) (rate(gateway_requests_total[5m]))` |
 
 ## Logging pipeline
 
@@ -104,7 +104,7 @@ Filter gateway logs by `trace_id` in your aggregator to correlate all events for
 
 ## Resiliency controls
 
-- **Circuit breakers** — automatically exclude failing providers; see the `ferrogw_circuit_breaker_state` metric
+- **Circuit breakers** — automatically exclude failing providers; see the `gateway_circuit_breaker_state` metric
 - **Retries** — configurable per target with status-code filtering (`retry_on_status`)
 - **Fallback strategy** — automatically promotes to the next target when primary fails
 - **Health endpoint** — integrate into your load balancer's health check for automatic traffic shifting

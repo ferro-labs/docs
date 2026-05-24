@@ -24,11 +24,11 @@ AI gateways differ more than they look. Here's how to think about the choice.
 | **Multi-tenant** | Ferro Labs Managed | Yes | Yes | No | No |
 | **MCP support** | Yes | No | No | No | No |
 | **Single binary** | Yes | No | No | Yes | No |
-| **Provider count** | 29 | 100+ | Varies | Fewer | Limited |
+| **Provider count** | 30 | 100+ | Varies | Fewer | Limited |
 | **Active development** | Yes | Yes | Yes | Yes | Yes |
 
 :::info
-Provider count is not the whole story. Ferro Labs covers the 29 providers that handle the vast majority of production traffic. LiteLLM's larger catalog includes many community-contributed integrations that vary in maintenance quality.
+Provider count is not the whole story. Ferro Labs covers the 30 providers that handle the vast majority of production traffic. LiteLLM's larger catalog includes many community-contributed integrations that vary in maintenance quality.
 :::
 
 ## Which Tool Fits Your Situation
@@ -37,7 +37,7 @@ Provider count is not the whole story. Ferro Labs covers the 29 providers that h
 
 **Best fit: Ferro Labs OSS**
 
-You want something that runs in minutes, has no dependencies to manage, and covers the providers you actually use. Ferro Labs AI Gateway ships as a single Go binary, works with a single config file, and supports 29 providers out of the box.
+You want something that runs in minutes, has no dependencies to manage, and covers the providers you actually use. Ferro Labs AI Gateway ships as a single Go binary, works with a single config file, and supports 30 providers out of the box.
 
 ### 2. Python-first team already using LangChain
 
@@ -71,9 +71,9 @@ The gateway runs a full MCP tool loop internally. Your client sends a normal cha
 The built-in MCP loop means you can add tool-use capabilities to any application that speaks the OpenAI API format, even if that application has no concept of function calling.
 :::
 
-### 4. Single config file, 29 providers
+### 4. Single config file, 30 providers
 
-One configuration file activates any combination of 29 providers. Ferro Labs AI Gateway discovers credentials from environment variables automatically — no per-provider setup code.
+One configuration file activates any combination of 30 providers. Ferro Labs AI Gateway discovers credentials from environment variables automatically — no per-provider setup code.
 
 ### 5. Apache 2.0 with no surprises
 

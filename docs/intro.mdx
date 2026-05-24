@@ -1,7 +1,7 @@
 ---
 title: Introduction
-description: "Ferro Labs AI Gateway is an open-source Go LLM proxy that routes traffic across 29 AI providers and 2,500+ models with sub-millisecond overhead. Drop-in OpenAI-compatible API with 8 routing strategies, 11 plugins, and MCP tool-calling."
-keywords: [AI gateway, open source AI gateway, LLM proxy, OpenAI compatible, Go LLM proxy, self-hosted LLM gateway, AI middleware, multi-provider AI, LLM routing, AI gateway v1.0.0]
+description: "Ferro Labs AI Gateway is an open-source Go LLM proxy that routes traffic across 30 AI providers and 2,500+ models with sub-millisecond overhead. Drop-in OpenAI-compatible API with 8 routing strategies, 11 plugins, and MCP tool-calling."
+keywords: [AI gateway, open source AI gateway, LLM proxy, OpenAI compatible, Go LLM proxy, self-hosted LLM gateway, AI middleware, multi-provider AI, LLM routing, AI gateway v1.1.0]
 ---
 
 import Tabs from '@theme/Tabs';
@@ -11,7 +11,7 @@ import TabItem from '@theme/TabItem';
 
 You're calling OpenAI directly. When they go down, your product goes down. When they raise prices, you scramble. When you need to test a new model, you rewrite integration code. When you want observability, you build it yourself.
 
-**Ferro Labs AI Gateway** is a single Go binary that sits in front of all your LLM traffic. It exposes an OpenAI-compatible API, routes requests across 29 providers and 2,500+ models, enforces safety policies with 11 plugins, and emits production observability — without changing your existing client code.
+**Ferro Labs AI Gateway** is a single Go binary that sits in front of all your LLM traffic. It exposes an OpenAI-compatible API, routes requests across 30 providers and 2,500+ models, enforces safety policies with 11 plugins, and emits production observability — without changing your existing client code.
 
 :::tip Ferro Labs Managed — Managed AI Gateway
 Ferro Labs Managed wraps the open-source gateway with multi-tenancy, a dashboard, durable billing, semantic caching, and 5 enterprise security plugins. [Join the early access waitlist →](https://www.ferrolabs.ai/)
@@ -41,7 +41,7 @@ Then send requests to `http://localhost:8080/v1/chat/completions` exactly as you
 
 | Capability | Details |
 |---|---|
-| **29 AI providers** | OpenAI, Anthropic, Gemini, Mistral, Groq, Cohere, DeepSeek, Together, Perplexity, Fireworks, AI21, Azure OpenAI, Azure Foundry, xAI, Ollama, Replicate, AWS Bedrock, Vertex AI, Hugging Face, Cerebras, NVIDIA NIM, Cloudflare Workers AI, Databricks, Novita AI, Qwen, Moonshot AI, SambaNova, DeepInfra, OpenRouter |
+| **30 AI providers** | OpenAI, Anthropic, Gemini, Mistral, Groq, Cohere, DeepSeek, Together, Perplexity, Fireworks, AI21, Azure OpenAI, Azure Foundry, xAI, Ollama, Ollama Cloud, Replicate, AWS Bedrock, Vertex AI, Hugging Face, Cerebras, NVIDIA NIM, Cloudflare Workers AI, Databricks, Novita AI, Qwen, Moonshot AI, SambaNova, DeepInfra, OpenRouter |
 | **8 routing strategies** | Single, Fallback, Weighted, Conditional, Least-Latency, Cost-Optimized, Content-Based, A/B Test |
 | **6 OSS + 5 Ferro Labs Managed plugins** | Word filter, max-token, response cache, request logger, rate limit, budget (OSS) — plus PII redact, secret scan, prompt shield, schema guard, regex guard ([Ferro Labs Managed](https://www.ferrolabs.ai/)) |
 | **MCP integration** | Agentic tool-calling loop via Model Context Protocol servers with streaming support (v1.0.0) |
@@ -65,7 +65,7 @@ Go's goroutine scheduler, low-GC overhead, and lack of a GIL make it ideal for a
 - [Configuration](/getting-started/configuration) — Full config reference
 
 ### Guides
-- [Providers](/guides/providers) — All 29 providers and supported capabilities
+- [Providers](/guides/providers) — All 30 providers and supported capabilities
 - [Provider configuration](/guides/providers-config) — Environment variables per provider
 - [Authentication](/guides/auth) — API key configuration
 - [Routing policies](/guides/routing-policies) — All 8 routing strategies with examples
@@ -115,9 +115,9 @@ Go's goroutine scheduler, low-GC overhead, and lack of a GIL make it ideal for a
   "name": "Ferro Labs AI Gateway",
   "applicationCategory": "DeveloperApplication",
   "operatingSystem": "Linux, macOS, Windows",
-  "softwareVersion": "1.0.0",
+  "softwareVersion": "1.1.0",
   "license": "https://opensource.org/licenses/Apache-2.0",
   "url": "https://github.com/ferro-labs/ai-gateway",
-  "description": "Open-source, high-performance AI gateway built in Go. Routes traffic across 29 LLM providers with sub-millisecond overhead."
+  "description": "Open-source, high-performance AI gateway built in Go. Routes traffic across 30 LLM providers with sub-millisecond overhead."
 })}
 </script>

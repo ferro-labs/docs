@@ -4,25 +4,27 @@ description: Full observability for your LLM traffic — Prometheus metrics, str
 keywords: [LLM observability, AI gateway metrics, Prometheus LLM, AI gateway monitoring, structured logging AI, LLM tracing]
 ---
 
-The gateway ships with three observability layers: Prometheus metrics, structured log output, and a deep health endpoint.
+The gateway ships with four observability layers: Prometheus metrics, OpenTelemetry tracing, structured log output, and a deep health endpoint.
 
 ## Prometheus metrics
 
-Metrics are exposed at `GET /metrics` in the standard Prometheus text format. Scrape this endpoint with your Prometheus server.
+Metrics are exposed at `GET /metrics` in the standard Prometheus text format. Scrape this endpoint with your Prometheus server. All metric names use the `gateway_` prefix.
 
 ### Available metrics
 
 | Metric | Type | Labels | Description |
 |---|---|---|---|
-| `ferrogw_requests_total` | Counter | `provider`, `model`, `status` | Total requests processed |
-| `ferrogw_errors_total` | Counter | `provider`, `model`, `error_type` | Total errors by type |
-| `ferrogw_request_duration_seconds` | Histogram | `provider`, `model` | End-to-end request latency |
-| `ferrogw_provider_latency_seconds` | Histogram | `provider` | Provider round-trip latency |
-| `ferrogw_tokens_total` | Counter | `provider`, `model`, `type` | Token usage (`type`: `prompt`\|`completion`) |
-| `ferrogw_cache_hits_total` | Counter | | Response cache hits |
-| `ferrogw_cache_misses_total` | Counter | | Response cache misses |
-| `ferrogw_circuit_breaker_state` | Gauge | `provider` | Circuit breaker state (`0`=closed, `1`=open, `2`=half-open) |
-| `ferrogw_plugin_blocks_total` | Counter | `plugin`, `reason` | Requests blocked by a plugin |
+| `gateway_requests_total` | Counter | `provider`, `model`, `status` | Total requests processed (`status`: `success`\|`error`\|`rejected`) |
+| `gateway_request_duration_seconds` | Histogram | `provider`, `model` | End-to-end request latency |
+| `gateway_tokens_input_total` | Counter | `provider`, `model` | Prompt tokens sent to providers |
+| `gateway_tokens_output_total` | Counter | `provider`, `model` | Completion tokens received from providers |
+| `gateway_provider_errors_total` | Counter | `provider`, `error_type` | Provider errors by type (`provider_error`\|`circuit_open`\|`timeout`) |
+| `gateway_circuit_breaker_state` | Gauge | `provider` | Circuit breaker state (`0`=closed, `1`=open, `2`=half-open) |
+| `gateway_rate_limit_rejections_total` | Counter | `key_type` | Requests rejected by rate limiting (`key_type`: `ip`\|`api_key`\|`plugin`) |
+| `gateway_request_cost_usd_total` | Counter | `provider`, `model` | Estimated cumulative request cost in USD (public pricing tables) |
+| `gateway_server_connections_current` | Gauge | `state` | Current inbound HTTP connections by state |
+| `gateway_server_connection_transitions_total` | Counter | `state` | Inbound HTTP connection state transitions |
+| `gateway_hook_events_dropped_total` | Counter | `subject` | Hook dispatches dropped because the worker queue was full |
 
 ### Example Prometheus scrape config
 
@@ -39,24 +41,76 @@ scrape_configs:
 
 ```promql
 # Request rate by provider
-rate(ferrogw_requests_total[5m])
+rate(gateway_requests_total[5m])
 
 # P99 request latency
-histogram_quantile(0.99, rate(ferrogw_request_duration_seconds_bucket[5m]))
+histogram_quantile(0.99, rate(gateway_request_duration_seconds_bucket[5m]))
 
-# Error rate percentage
-rate(ferrogw_errors_total[5m]) / rate(ferrogw_requests_total[5m]) * 100
+# Error rate percentage (failed requests over all requests)
+sum(rate(gateway_requests_total{status="error"}[5m]))
+  / sum(rate(gateway_requests_total[5m])) * 100
 
-# Token usage per minute
-rate(ferrogw_tokens_total[1m]) * 60
+# Token throughput per minute (input + output)
+(rate(gateway_tokens_input_total[1m]) + rate(gateway_tokens_output_total[1m])) * 60
 
-# Cache hit ratio
-rate(ferrogw_cache_hits_total[5m]) /
-  (rate(ferrogw_cache_hits_total[5m]) + rate(ferrogw_cache_misses_total[5m]))
+# Estimated spend rate (USD/hour) by model
+rate(gateway_request_cost_usd_total[5m]) * 3600
 
 # Open circuit breakers
-ferrogw_circuit_breaker_state == 1
+gateway_circuit_breaker_state == 1
 ```
+
+## OpenTelemetry tracing
+
+Added in **v1.1.0**. The gateway emits OpenTelemetry traces over OTLP. Tracing is **opt-in** — until you configure an OTLP endpoint or an exporter, the gateway uses a zero-allocation no-op tracer with no overhead on the hot path.
+
+Each request opens a `gateway.request` root span stamped with `gen_ai.*` and `ferro.*` attributes (model, token counts, estimated cost, routing decision). Plugin executions and MCP tool calls emit child spans, and outbound provider calls are instrumented with `otelhttp` so the W3C `traceparent` is propagated upstream.
+
+### Unified trace ID
+
+The OTel `trace_id`, the structured-log `trace_id`, and the `X-Request-ID` response header are all the **same value**. Copy a trace ID from a log line and look it up directly in your tracing backend.
+
+### Configuration
+
+Configure tracing under the `observability` block in your gateway config:
+
+```yaml
+observability:
+  tracing:
+    enabled: true
+    endpoint: ""             # host:port; blank falls back to OTEL_EXPORTER_OTLP_ENDPOINT
+    protocol: grpc           # grpc | http/protobuf  (https:// endpoint ⇒ TLS, else insecure)
+    service_name: ferrogw
+    sample_ratio: 1.0        # head sampler, 0.0–1.0
+    privacy_level: metadata  # none | metadata (default) | full
+    shutdown_grace: 10s      # max drain time for in-flight exports on shutdown
+  exporters:                 # plugin exporters receiving completed/failed events
+    - name: langsmith
+      enabled: false
+      config: {}
+```
+
+Standard OpenTelemetry environment variables take precedence over the config file:
+
+| Variable | Purpose |
+|---|---|
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | OTLP collector endpoint; enables tracing when set |
+| `OTEL_EXPORTER_OTLP_HEADERS` | Headers sent to the collector (e.g. auth tokens) |
+| `OTEL_TRACES_SAMPLER` / `OTEL_TRACES_SAMPLER_ARG` | Head-sampler overrides |
+
+### Privacy levels
+
+`privacy_level` controls how much request content reaches your tracing backend:
+
+| Level | Behavior |
+|---|---|
+| `none` | No prompt/response content; error messages omitted |
+| `metadata` | **Default.** Metadata only; error messages redacted (email, JWT, AWS keys) |
+| `full` | Raw error text included — use only in trusted environments |
+
+### Exporters
+
+Beyond raw OTLP, the gateway exposes an exporter event seam: registered exporters receive `gateway.request.completed` / `gateway.request.failed` events for bridging to backends like LangSmith, Langfuse, or Datadog. No exporters ship in the core gateway — they live in the separate [`ai-gateway-plugins`](https://github.com/ferro-labs/ai-gateway) repo. List enabled exporters under `observability.exporters`; unknown or failed exporters are logged and skipped (non-fatal).
 
 ## Structured JSON logs
 

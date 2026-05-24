@@ -1,6 +1,6 @@
 ---
 title: Concepts
-description: "Core concepts of the Ferro Labs AI Gateway — OpenAI-compatible routing across 29 providers, 8 strategies, plugin pipeline, MCP tool-calling, and the difference between routes, targets, and strategies."
+description: "Core concepts of the Ferro Labs AI Gateway — OpenAI-compatible routing across 30 providers, 8 strategies, plugin pipeline, MCP tool-calling, and the difference between routes, targets, and strategies."
 keywords: [AI gateway concepts, LLM routing strategies, AI plugins, MCP tool calling, OpenAI wire format, gateway routing, content-based routing, ab-test routing]
 ---
 
@@ -27,7 +27,7 @@ See [Routing policies](/guides/routing-policies) for YAML examples of each strat
 
 ## Providers and targets
 
-A **provider** is a registered AI API backend (e.g., OpenAI, Anthropic). The gateway supports [29 providers](/guides/providers). Providers are enabled by setting environment variables — no code needed.
+A **provider** is a registered AI API backend (e.g., OpenAI, Anthropic). The gateway supports [30 providers](/guides/providers). Providers are enabled by setting environment variables — no code needed.
 
 A **target** is a reference to a provider in your config. Targets carry optional fields: `weight` (for load balancing), `retry` (attempts + status codes), and `circuit_breaker` (thresholds + timeout).
 

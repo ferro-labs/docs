@@ -49,8 +49,9 @@ sequenceDiagram
 
 ### Routing engine
 
-- Supports single, fallback, weighted, and conditional strategies.
+- Supports all 8 strategies: `single`, `fallback`, `loadbalance`, `conditional`, `content-based`, `least-latency`, `cost-optimized`, and `ab-test`.
 - Separates model selection policy from app logic.
+- See [Routing policies](/guides/routing-policies) for YAML examples of each strategy.
 
 ### Policy and controls
 

@@ -10,32 +10,9 @@ Complete, copy-pasteable configurations for the most common deployment patterns.
 
 Route every request to OpenAI first. If OpenAI fails or returns a retryable status code, fall through to Anthropic, then Gemini. Circuit breakers prevent hammering a provider that is down.
 
+Providers (`openai`, `anthropic`, `gemini`) are registered by setting the corresponding API key environment variables (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`) and are referenced by `virtual_key` in `targets`.
+
 ```yaml title="config.yaml"
-listeners:
-  - address: 0.0.0.0
-    port: 8080
-
-providers:
-  - name: openai
-    type: openai
-    api_key: ${OPENAI_API_KEY}
-    models:
-      - gpt-4o
-      - gpt-4o-mini
-
-  - name: anthropic
-    type: anthropic
-    api_key: ${ANTHROPIC_API_KEY}
-    models:
-      - claude-sonnet-4-20250514
-      - claude-haiku-4-20250414
-
-  - name: gemini
-    type: google
-    api_key: ${GEMINI_API_KEY}
-    models:
-      - gemini-2.0-flash
-
 strategy:
   mode: fallback
 
@@ -85,36 +62,9 @@ If OpenAI returns a `429` or `5xx`, the gateway automatically retries up to 3 ti
 
 The `cost-optimized` strategy uses the built-in model catalog (2,500+ entries with pricing data) to estimate the input token cost for each target and routes to the cheapest one.
 
+Register each provider by setting its API key environment variable (`TOGETHER_API_KEY`, `DEEPSEEK_API_KEY`, `GEMINI_API_KEY`, `OPENAI_API_KEY`), then reference them by `virtual_key`.
+
 ```yaml title="config.yaml"
-listeners:
-  - address: 0.0.0.0
-    port: 8080
-
-providers:
-  - name: together
-    type: together
-    api_key: ${TOGETHER_API_KEY}
-    models:
-      - meta-llama/Llama-3.1-70B-Instruct
-
-  - name: deepseek
-    type: deepseek
-    api_key: ${DEEPSEEK_API_KEY}
-    models:
-      - deepseek-chat
-
-  - name: gemini
-    type: google
-    api_key: ${GEMINI_API_KEY}
-    models:
-      - gemini-2.0-flash
-
-  - name: openai
-    type: openai
-    api_key: ${OPENAI_API_KEY}
-    models:
-      - gpt-4o-mini
-
 strategy:
   mode: cost-optimized
 
@@ -145,24 +95,9 @@ The gateway estimates the input token cost across all targets with a compatible 
 
 Split live traffic between two providers. Every request is tagged with a variant label so you can aggregate quality metrics downstream.
 
+Register `openai` and `anthropic` by setting `OPENAI_API_KEY` and `ANTHROPIC_API_KEY`, then reference them by `virtual_key`.
+
 ```yaml title="config.yaml"
-listeners:
-  - address: 0.0.0.0
-    port: 8080
-
-providers:
-  - name: openai
-    type: openai
-    api_key: ${OPENAI_API_KEY}
-    models:
-      - gpt-4o
-
-  - name: anthropic
-    type: anthropic
-    api_key: ${ANTHROPIC_API_KEY}
-    models:
-      - claude-sonnet-4-20250514
-
 strategy:
   mode: ab-test
   ab_variants:
@@ -179,10 +114,14 @@ targets:
 
 plugins:
   - name: request-logger
-    type: postgres-logger
-    connection_string: postgres://ferro:ferro_secret@postgres:5432/ferro_logs?sslmode=disable
-    log_request_body: true
-    log_response_body: true
+    type: logging
+    stage: before_request
+    enabled: true
+    config:
+      level: info
+      persist: true
+      backend: postgres
+      dsn: postgres://ferro:ferro_secret@postgres:5432/ferro_logs?sslmode=disable
 ```
 
 ```bash
@@ -217,24 +156,9 @@ GROUP BY variant;
 
 Use `content-based` routing to inspect user messages and route to specialized models without any client-side logic.
 
+Register `deepseek` and `openai` by setting `DEEPSEEK_API_KEY` and `OPENAI_API_KEY`, then reference them by `virtual_key`.
+
 ```yaml title="config.yaml"
-listeners:
-  - address: 0.0.0.0
-    port: 8080
-
-providers:
-  - name: deepseek
-    type: deepseek
-    api_key: ${DEEPSEEK_API_KEY}
-    models:
-      - deepseek-chat
-
-  - name: openai
-    type: openai
-    api_key: ${OPENAI_API_KEY}
-    models:
-      - gpt-4o-mini
-
 strategy:
   mode: content-based
   content_conditions:
@@ -283,18 +207,9 @@ Content conditions are evaluated in order. The first match wins. If no condition
 
 Expose the gateway as your SaaS AI endpoint. Each customer gets an API key with 60 requests per minute and a $5 spend cap.
 
+Register `openai` by setting `OPENAI_API_KEY`, then reference it by `virtual_key`.
+
 ```yaml title="config.yaml"
-listeners:
-  - address: 0.0.0.0
-    port: 8080
-
-providers:
-  - name: openai
-    type: openai
-    api_key: ${OPENAI_API_KEY}
-    models:
-      - gpt-4o-mini
-
 strategy:
   mode: single
 
@@ -308,12 +223,13 @@ plugins:
     stage: before_request
     enabled: true
     config:
+      requests_per_second: 100
       key_rpm: 60
       burst: 10
 
   # Spend cap: $5 per API key (check before request)
   - name: budget
-    type: budget
+    type: guardrail
     stage: before_request
     enabled: true
     config:
@@ -325,7 +241,7 @@ plugins:
 
   # Spend cap: record cost after response
   - name: budget
-    type: budget
+    type: guardrail
     stage: after_request
     enabled: true
     config:
@@ -380,18 +296,9 @@ Rate checks execute in order: **global, then per-key, then per-user**. The budge
 
 Connect a Model Context Protocol (MCP) tool server to the gateway. The gateway runs the full agentic tool-calling loop so your client receives a final text answer without implementing tool-calling logic.
 
+Register `anthropic` by setting `ANTHROPIC_API_KEY`, then reference it by `virtual_key`.
+
 ```yaml title="config.yaml"
-listeners:
-  - address: 0.0.0.0
-    port: 8080
-
-providers:
-  - name: anthropic
-    type: anthropic
-    api_key: ${ANTHROPIC_API_KEY}
-    models:
-      - claude-sonnet-4-20250514
-
 strategy:
   mode: single
 

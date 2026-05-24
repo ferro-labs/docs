@@ -60,8 +60,8 @@ mcp_servers:
 | `url` | Yes | — | HTTP endpoint of the MCP server (Streamable HTTP transport) |
 | `headers` | No | `{}` | HTTP headers to include (supports `${ENV_VAR}` interpolation) |
 | `allowed_tools` | No | all tools | If set, only these tool names are injected and callable |
-| `timeout_seconds` | No | `10` | Per-tool-call HTTP timeout |
-| `max_call_depth` | No | `3` | Maximum number of tool call rounds per request |
+| `timeout_seconds` | No | `30` | Per-request timeout for calls to this server |
+| `max_call_depth` | No | `5` | Maximum number of tool call rounds per request |
 
 ## Startup behaviour
 
@@ -114,15 +114,11 @@ The gateway supports MCP servers that implement the **2025-11-25 Streamable HTTP
 
 ## Testing the connection
 
-After starting the gateway with `mcp_servers` configured, verify tools are loaded:
+After starting the gateway with `mcp_servers` configured, verify tools are loaded by checking the startup logs — the gateway logs MCP tool discovery once background initialisation completes:
 
 ```bash
 # The gateway logs MCP tool discovery on startup
 docker logs ferrogw 2>&1 | grep mcp
-
-# Or check the full tool list via the admin API
-curl -H "Authorization: Bearer $ADMIN_API_KEY" \
-  http://localhost:8080/admin/mcp/tools
 ```
 
 ## Streaming requests
