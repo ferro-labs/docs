@@ -30,6 +30,37 @@ const sidebars: SidebarsConfig = {
     'integrations/sdk/go',
     'integrations/sdk/openai-compatible',
 
+    // ── Frameworks ──
+    {type: 'html', value: '<div class="sidebar-divider">Frameworks</div>'},
+    'frameworks/index',
+    {
+      type: 'category',
+      label: 'Python',
+      collapsed: true,
+      items: [
+        'frameworks/langchain-python',
+        'frameworks/langgraph',
+        'frameworks/langsmith',
+        'frameworks/llamaindex',
+        'frameworks/crewai',
+        'frameworks/autogen',
+        'frameworks/haystack',
+        'frameworks/dspy',
+        'frameworks/pydantic-ai',
+        'frameworks/instructor',
+      ],
+    },
+    {
+      type: 'category',
+      label: 'TypeScript',
+      collapsed: true,
+      items: [
+        'frameworks/vercel-ai-sdk',
+        'frameworks/langchain-js',
+        'frameworks/mastra',
+      ],
+    },
+
     // ── Self Hosting ──
     {type: 'html', value: '<div class="sidebar-divider">Self Hosting</div>'},
     'integrations/deployment/railway',
